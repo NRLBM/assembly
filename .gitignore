@@ -1,0 +1,4 @@
+.snakemake
+tmp_data
+output
+input/*

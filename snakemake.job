@@ -1,0 +1,6 @@
+#!/bin/bash
+
+#SBATCH -t 2:00:00
+#SBATCH -N 1
+
+snakemake --use-conda -s workflow/assembly.smk -j 16

@@ -1,0 +1,10 @@
+kraken:
+ general: "--output - --fastq-input --gzip-compressed --paired"
+ db: "/home/vdputten/kraken_db_nohuman"
+
+shovill:
+ minlen: "500"
+ ram: "64"
+ depth: "100"
+ assembler: "spades"
+ tmpdir: "$TMPDIR"
