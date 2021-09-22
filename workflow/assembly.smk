@@ -79,7 +79,8 @@ rule shovill:
   threads: 16
   shell:
     """
-    shovill --assembler {params.assembler} --outdir {output.shovill} --tmp {params.tmpdir} --depth {params.depth} --cpus {threads} --ram {params.ram} --minlen {params.minlen} --R1 {input.fw} --R2 {input.rv} 2>&1>{log}
+    GENOME_SIZE=$(bash workflow/scripts/estimated_genome_size.sh {input.fw})
+    shovill --assembler {params.assembler} --outdir {output.shovill} --tmp {params.tmpdir} --depth {params.depth} --gsize ${{GENOME_SIZE}} --cpus {threads} --ram {params.ram} --minlen {params.minlen} --R1 {input.fw} --R2 {input.rv} 2>&1>{log}
     cp {output.shovill}/contigs.fa {output.assembly}
     """
 

@@ -2,3 +2,6 @@
 tmp_data
 output
 input/*
+snakemake.job
+slurm*
+logs
