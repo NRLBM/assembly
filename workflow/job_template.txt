@@ -18,4 +18,4 @@ do
   rm -rf "$file"
 done
 
-echo "Het Lisa script ingediend op $TIMESTAMP is zonder foutmeldingen voltooid. De data is te vinden in de \"output\" map op Lisa." | mail -s "Lisa script ingediend op $TIMESTAMP is klaar" "$(cat .email_user),$(cat .email_bioinformatician)"
+echo "Het Lisa script ingediend op $TIMESTAMP is zonder foutmeldingen voltooid. De resultaten zijn te vinden in de \"output/${TIMESTAMP}\" map op Lisa." | mail -s "Lisa script ingediend op $TIMESTAMP is klaar" "$(cat .email_user),$(cat .email_bioinformatician)"
