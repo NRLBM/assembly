@@ -7,17 +7,17 @@ rule all:
     # "summary.xlsx",
     # expand("output/assemblies/{sample}.fasta", sample=IDS),
     "output/qc_reports",
-    expand("backup/{sample}.tar.gz", sample=IDS)
+    expand("backup/{timestamp}/{sample}.tar.gz", sample=IDS, timestamp=config["timestamp"])
 
 rule fastqc_pre_R1:
   input:
     "input/{sample}_L001_R1_001.fastq.gz"
   output:
-    html = "tmp_data/fastqc_pre_out/{sample}_R1.html",
-    zip = "tmp_data/fastqc_pre_out/{sample}_R1_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file
+    html = temp("tmp_data/fastqc_pre_out/{sample}_R1.html"),
+    zip = temp("tmp_data/fastqc_pre_out/{sample}_R1_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
   params: "--quiet"
   log:
-    "logs/fastqc_pre/{sample}_R1.log"
+    "workflow/logs/fastqc_pre/{sample}_R1.log"
   threads: 2
   wrapper:
     "0.78.0/bio/fastqc"
@@ -26,11 +26,11 @@ rule fastqc_pre_R2:
   input:
     "input/{sample}_L001_R2_001.fastq.gz"
   output:
-    html = "tmp_data/fastqc_pre_out/{sample}_R2.html",
-    zip = "tmp_data/fastqc_pre_out/{sample}_R2_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file
+    html = temp("tmp_data/fastqc_pre_out/{sample}_R2.html"),
+    zip = temp("tmp_data/fastqc_pre_out/{sample}_R2_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
   params: "--quiet"
   log:
-    "logs/fastqc_pre/{sample}_R2.log"
+    "workflow/logs/fastqc_pre/{sample}_R2.log"
   threads: 2
   wrapper:
     "0.78.0/bio/fastqc"
@@ -40,13 +40,12 @@ rule trimmomatic_pe:
     r1 = "input/{sample}_L001_R1_001.fastq.gz",
     r2 = "input/{sample}_L001_R2_001.fastq.gz"
   output:
-    r1 = "tmp_data/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
-    r2 = "tmp_data/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
-    # reads where trimming entirely removed the mate
-    r1_unpaired="tmp_data/trimmed/{sample}.1.unpaired.fastq.gz",
-    r2_unpaired="tmp_data/trimmed/{sample}.2.unpaired.fastq.gz"
+    r1 = temp("tmp_data/trimmed/{sample}_L001_R1_001_corrected.fastq.gz"),
+    r2 = temp("tmp_data/trimmed/{sample}_L001_R2_001_corrected.fastq.gz"),
+    r1_unpaired = temp("tmp_data/trimmed/{sample}.1.unpaired.fastq.gz"),
+    r2_unpaired = temp("tmp_data/trimmed/{sample}.2.unpaired.fastq.gz")
   log:
-    "logs/trimmomatic/{sample}.log"
+    "workflow/logs/trimmomatic/{sample}.log"
   params:
     # list of trimmers (see manual)
     trimmer=["ILLUMINACLIP:all_paired.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36"],
@@ -62,11 +61,11 @@ rule fastqc_post_R1:
   input:
     "tmp_data/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
   output:
-    html = "tmp_data/fastqc_post_out/{sample}_R1.html",
-    zip = "tmp_data/fastqc_post_out/{sample}_R1_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file
+    html = temp("tmp_data/fastqc_post_out/{sample}_R1.html"),
+    zip = temp("tmp_data/fastqc_post_out/{sample}_R1_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
   params: "--quiet"
   log:
-    "logs/fastqc_post/{sample}_R1.log"
+    "workflow/logs/fastqc_post/{sample}_R1.log"
   threads: 2
   wrapper:
     "0.78.0/bio/fastqc"
@@ -75,11 +74,11 @@ rule fastqc_post_R2:
   input:
     "tmp_data/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
   output:
-    html = "tmp_data/fastqc_post_out/{sample}_R2.html",
-    zip = "tmp_data/fastqc_post_out/{sample}_R2_fastqc.zip" # the suffix _fastqc.zip is necessary for multiqc to find the file
+    html = temp("tmp_data/fastqc_post_out/{sample}_R2.html"),
+    zip = temp("tmp_data/fastqc_post_out/{sample}_R2_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
   params: "--quiet"
   log:
-    "logs/fastqc_post/{sample}_R2.log"
+    "workflow/logs/fastqc_post/{sample}_R2.log"
   threads: 2
   wrapper:
     "0.78.0/bio/fastqc"
@@ -90,7 +89,7 @@ rule shovill:
     rv = "tmp_data/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
   output:
     assembly = "output/genomes/{sample}.fasta",
-    shovill = directory("tmp_data/shovill_out/{sample}"),
+    shovill = temp(directory("tmp_data/shovill_out/{sample}")),
   conda:
     "envs/shovill.yaml"
   params:
@@ -100,7 +99,7 @@ rule shovill:
     assembler = config["shovill"]["assembler"],
     tmpdir = config["shovill"]["tmpdir"]
   log:
-    "logs/shovill/{sample}.log"
+    "workflow/logs/shovill/{sample}.log"
   threads: 16
   shell:
     """
@@ -113,11 +112,11 @@ rule quast:
   input:
     "output/genomes/{sample}.fasta"
   output:
-    directory("tmp_data/quast_out/{sample}")
+    temp(directory("tmp_data/quast_out/{sample}"))
   conda:
     "envs/quast.yaml"
   log:
-    "logs/quast/{sample}.log"
+    "workflow/logs/quast/{sample}.log"
   threads: 8
   shell:
     """
@@ -129,14 +128,14 @@ rule kraken2:
     fw = "tmp_data/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
     rv = "tmp_data/trimmed/{sample}_L001_R2_001_corrected.fastq.gz"
   output:
-    report = "tmp_data/kraken_out/{sample}_kraken2_report.txt"
+    report = temp("tmp_data/kraken_out/{sample}_kraken2_report.txt")
   conda:
     "envs/kraken.yaml"
   params:
     general = config["kraken"]["general"],
     db = config["kraken"]["db"]
   log:
-    "logs/kraken2/{sample}.log"
+    "workflow/logs/kraken2/{sample}.log"
   threads: 8
   shell:
     """
@@ -148,9 +147,9 @@ rule multiqc_fastqc:
     expand("tmp_data/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2']),
     expand("tmp_data/fastqc_post_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2']),
   output:
-    "tmp_data/fastqc_report.html"
+    temp("tmp_data/fastqc_report.html")
   log:
-    "logs/multiqc_fastqc.log"
+    "workflow/logs/multiqc_fastqc.log"
   wrapper:
     "0.78.0/bio/multiqc"
 
@@ -158,9 +157,9 @@ rule multiqc_kraken:
   input:
     expand("tmp_data/kraken_out/{sample}_kraken2_report.txt", sample=IDS),
   output:
-    "tmp_data/kraken_report.html"
+    temp("tmp_data/kraken_report.html")
   log:
-    "logs/multiqc_kraken.log"
+    "workflow/logs/multiqc_kraken.log"
   wrapper:
     "0.78.0/bio/multiqc"
 
@@ -168,9 +167,9 @@ rule multiqc_quast:
   input:
     expand("tmp_data/quast_out/{sample}", sample=IDS)
   output:
-    "tmp_data/quast_report.html"
+    temp("tmp_data/quast_report.html")
   log:
-    "logs/multiqc_quast.log"
+    "workflow/logs/multiqc_quast.log"
   wrapper:
     "0.78.0/bio/multiqc"
 
@@ -198,9 +197,10 @@ rule backup_data:
     fastqc_post_R1 = "tmp_data/fastqc_post_out/{sample}_R1.html",
     fastqc_post_R2 = "tmp_data/fastqc_post_out/{sample}_R2.html",
   output:
-    "backup/{sample}.tar.gz"    
+    "backup/{timestamp}/{sample}.tar.gz"    
   params:
-    sample = "{sample}"
+    sample = "{sample}",
+    timestamp = config["timestamp"]
   shell:
     """
     mkdir -p tmp_data/.backup/{params.sample}/quast
@@ -214,6 +214,5 @@ rule backup_data:
     cp -r {input.quast} tmp_data/.backup/{params.sample}/quast
     cp {input.kraken} tmp_data/.backup/{params.sample}/kraken
     cp {input.genome} tmp_data/.backup/{params.sample}
-    tar zcvf backup/{params.sample}.tar tmp_data/.backup/{params.sample}    
-    pigz -9 backup/{params.sample}.tar
+    tar zcvf backup/{params.timestamp}/{params.sample}.tar.gz -C tmp_data/.backup {params.sample}
     """

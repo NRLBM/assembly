@@ -1,7 +1,9 @@
 .snakemake
 tmp_data
 output
+backup
 input/*
 snakemake.job
 slurm*
-logs
+workflow/logs
+.email

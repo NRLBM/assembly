@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -euo pipefail
+
+#SBATCH -N 1
+
+TIMESTAMP=REPLACE_TIME
+
+mkdir -p "backup/${TIMESTAMP}"
+
+snakemake -s workflow/assembly.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_${TIMESTAMP}.json"
+
+snakemake --report "backup/${TIMESTAMP}/report_${TIMESTAMP}.html" -s workflow/assembly.smk -j 16
+
+for file in tmp_data/* input/*
+do
+  echo "this should run: rm -rf $file"
+done
+
+echo "Run submitted on $TIMESTAMP is finished without errors" | mail -s "Klaar" naar $(cat .email)
