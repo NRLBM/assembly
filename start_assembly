@@ -2,6 +2,18 @@
 
 set -euo pipefail
 
+if [ ! -f .email_user ]
+then
+  echo "There is no email address of the user provided in the .email_user file. Exiting"
+  exit 1
+fi
+
+if [ ! -f .email_bioinformatician ]
+then
+  echo "There is no email address of the bioinformatician provided in the .email_bioinformatician file. Exiting"
+  exit 1
+fi
+
 # check.py checks input files and returns necessary calculation time
 NR_MINUTES=$(python workflow/scripts/check.py)
 
@@ -16,4 +28,4 @@ mkdir -p slurm/jobs slurm/slurm_logs
 cp workflow/job_template.txt slurm/jobs/"job_${START_TIME}.txt"
 sed -i "s/REPLACE_TIME/$START_TIME/" slurm/jobs/"job_${START_TIME}.txt"
 
-sbatch --mail-type END,ERROR --mail-user $(cat .email) --time "$NR_MINUTES" --output "slurm/slurm_logs/job_%j_%u.out" --error "slurm/slurm_logs/job_%j_%u.err" slurm/jobs/"job_${START_TIME}.txt"
+sbatch --mail-type END,ERROR --mail-user $(cat .email_bioinformatician) --time "$NR_MINUTES" --output "slurm/slurm_logs/job_%j_%u.out" --error "slurm/slurm_logs/job_%j_%u.err" slurm/jobs/"job_${START_TIME}.txt"

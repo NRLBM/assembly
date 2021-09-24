@@ -10,11 +10,12 @@ mkdir -p "backup/${TIMESTAMP}"
 
 snakemake -s workflow/assembly.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_${TIMESTAMP}.json"
 
-snakemake --report "backup/${TIMESTAMP}/report_${TIMESTAMP}.html" -s workflow/assembly.smk -j 16
+snakemake -s workflow/assembly.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_${TIMESTAMP}.html"
 
 for file in tmp_data/* input/*
 do
-  echo "this should run: rm -rf $file"
+  echo "Removing $file"
+  rm -rf "$file"
 done
 
-echo "Run submitted on $TIMESTAMP is finished without errors" | mail -s "Klaar" naar $(cat .email)
+echo "Het Lisa script ingediend op $TIMESTAMP is zonder foutmeldingen voltooid. De data is te vinden in de \"output\" map op Lisa." | mail -s "Lisa script ingediend op $TIMESTAMP is klaar" "$(cat .email_user),$(cat .email_bioinformatician)"

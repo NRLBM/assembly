@@ -5,5 +5,4 @@ backup
 input/*
 snakemake.job
 slurm*
-workflow/logs
-.email
+.email*
