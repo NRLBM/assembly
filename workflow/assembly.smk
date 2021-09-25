@@ -128,7 +128,7 @@ rule kraken2:
     fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
     rv = "tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz"
   output:
-    report = temp("tmp_data/{timestamp}/kraken_out/{sample}_kraken2_report.txt")
+    report = temp("tmp_data/{timestamp}/kraken_out/{sample}.txt")
   conda:
     "envs/kraken.yaml"
   params:
@@ -155,29 +155,19 @@ rule multiqc_fastqc:
 
 rule multiqc_kraken:
   input:
-    expand("tmp_data/{timestamp}/kraken_out/{sample}_kraken2_report.txt", sample=IDS, timestamp=config["timestamp"]),
-  output:
-    temp("tmp_data/{timestamp}/kraken_report.html")
-  log:
-    "slurm/snakemake_logs/{timestamp}/multiqc_kraken.log"
-  wrapper:
-    "0.78.0/bio/multiqc"
-
-rule multiqc_quast:
-  input:
+    expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/quast_out/{sample}", sample=IDS, timestamp=config["timestamp"])
   output:
-    temp("tmp_data/{timestamp}/quast_report.html")
+    temp("tmp_data/{timestamp}/kraken_quast_report.html")
   log:
-    "slurm/snakemake_logs/{timestamp}/multiqc_quast.log"
+    "slurm/snakemake_logs/{timestamp}/multiqc_kraken_quast.log"
   wrapper:
     "0.78.0/bio/multiqc"
 
 rule copy_data:
   input:
     "tmp_data/{timestamp}/fastqc_report.html",
-    "tmp_data/{timestamp}/kraken_report.html",
-    "tmp_data/{timestamp}/quast_report.html"
+    "tmp_data/{timestamp}/kraken_quast_report.html",
   output:
     directory("output/{timestamp}/qc_reports")
   threads: 1
@@ -190,7 +180,7 @@ rule copy_data:
 rule backup_data:
   input:
     genome = "output/{timestamp}/genomes/{sample}.fasta",
-    kraken = "tmp_data/{timestamp}/kraken_out/{sample}_kraken2_report.txt",
+    kraken = "tmp_data/{timestamp}/kraken_out/{sample}.txt",
     quast = "tmp_data/{timestamp}/quast_out/{sample}",
     fastqc_pre_R1 = "tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1.html",
     fastqc_pre_R2 = "tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2.html",
