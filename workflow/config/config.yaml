@@ -1,5 +1,5 @@
 kraken:
- general: "--output - --fastq-input --gzip-compressed --paired"
+ general: "--output - --gzip-compressed --paired"
  db: "/home/vdputten/kraken_db_nohuman"
 
 shovill:

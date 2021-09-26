@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import argparse
+
+parser = argparse.ArgumentParser(description='Convert .csv file to .xlsx file')
+
+parser.add_argument('input', help='Input csv file', type=str)
+parser.add_argument('output', help='Output xlsx file', type=str)
+
+args = parser.parse_args()
+
+import openpyxl
+import pandas as pd
+
+df = pd.read_csv(args.input, sep=',')
+df.to_excel(args.output, engine='openpyxl', index=None)
