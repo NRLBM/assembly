@@ -1,13 +1,20 @@
+# This defines the file containing configurations
+# These values can be accessed through config[entry]
+# See https://yaml.org/ for explanation of the YAML format
 configfile: "workflow/config/config.yaml"
 
+# Identify sample names from the R1 read files in the input folder
+# The script check.py should have already checked whether all samples have a single R1 and R2 file associated with it and whether the input folder does not contain other files
 IDS, = glob_wildcards("input/{sample}_L001_R1_001.fastq.gz")
 
+# Define the desired output of the pipeline 
 rule all:
   input:
     expand("output/{timestamp}/qc_reports", timestamp=config["timestamp"]),
     expand("backup/{timestamp}/{sample}.tar.gz", sample=IDS, timestamp=config["timestamp"]),
     expand("output/{timestamp}/summary.xlsx", timestamp=config["timestamp"])
 
+# Run FastQC before read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R1:
   input:
     "input/{sample}_L001_R1_001.fastq.gz"
@@ -21,6 +28,7 @@ rule fastqc_pre_R1:
   wrapper:
     "0.78.0/bio/fastqc"
 
+# Run FastQC before read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R2:
   input:
     "input/{sample}_L001_R2_001.fastq.gz"
@@ -34,6 +42,13 @@ rule fastqc_pre_R2:
   wrapper:
     "0.78.0/bio/fastqc"
 
+# Trim and filter reads using Trimmomatic, executed as a Snakemake wrapper
+# See http://www.usadellab.org/cms/?page=trimmomatic for explanation of the Trimmomatic settings
+# ILLUMINACLIP:all_paired.fa:2:30:10 Removes Illumina adapters based on FASTA file all_paired.fa. Use 2 seed mismatches, a palindrome clip threshold of 30 and a simple clip threshold of 10
+# LEADING:3 Remove low quality bases from the beginning. Minimum quality needed is 3. Special Illumina "low quality segment" regions are marked with quality score 2
+# TRAILING:3 Remove low quality bases from the end. Minimum quality needed is 3. Special Illumina "low quality segment" regions are marked with quality score 2
+# SLIDINGWINDOW:4:20 Perform sliding window trimming, with a window size of 4 bp and a required quality of 20
+# MINLEN:36 Remove reads shorter than 36 bp
 rule trimmomatic_pe:
   input:
     r1 = "input/{sample}_L001_R1_001.fastq.gz",
@@ -56,6 +71,7 @@ rule trimmomatic_pe:
   wrapper:
     "0.78.0/bio/trimmomatic/pe"
 
+# Run FastQC after read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_post_R1:
   input:
     "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
@@ -69,6 +85,7 @@ rule fastqc_post_R1:
   wrapper:
     "0.78.0/bio/fastqc"
 
+# Run FastQC after read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_post_R2:
   input:
     "tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
@@ -82,6 +99,10 @@ rule fastqc_post_R2:
   wrapper:
     "0.78.0/bio/fastqc"
 
+# Assemble trimmed data into a draft genome. Only the genome is retained currently.
+# The bash script estimates genome size using mash. Shovill tries this as well using kmc but this fails too often in our setup.
+# Several parameters are set in the configuration file. Standard settings are to only retain contigs >=500 bp in length,
+# subsample reads to estimated 100X depth, use 64 Gb RAM, use SPAdes as assembler and $TMPDIR as tmpdir. 
 rule shovill:
   input:
     fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
@@ -107,6 +128,8 @@ rule shovill:
     cp {output.shovill}/contigs.fa {output.assembly}
     """
 
+# Estimate actual read depth. Map trimmed reads back onto assembly to extract depth using bedtools. All data in this step is piped so no intermediate files remain.
+# Loosely based on http://thegenomefactory.blogspot.com/2018/10/a-unix-one-liner-to-call-bacterial.html 
 rule coverage:
   input:
     fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
@@ -126,6 +149,8 @@ rule coverage:
     minimap2 -a -x {params.minimap_x} -t {threads} {input.assembly} {input.fw} {input.rv} | samtools sort -l 0 --threads {threads} | bedtools genomecov -d -ibam stdin | awk '{{t += $3}} END {{print t/NR}}' 1>{output} 2>{log}
     """
 
+# Assess assembly quality (without reference genome).
+# Version 4.* of Quast is defined in the conda environment file as Quast version 5.* fails to install on some occassions and the most recent version does not offer advantages in our use case
 rule quast:
   input:
     "output/{timestamp}/genomes/{sample}.fasta"
@@ -141,6 +166,8 @@ rule quast:
     quast --threads {threads} -o {output} {input} 2>&1>{log}
     """
 
+# Assess which species are present in the trimmed data.
+# Currently this uses a MiniKraken database, but plan to compose a Reflab-specific database with relevant organisms
 rule kraken2:
   input:
     fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
@@ -160,6 +187,7 @@ rule kraken2:
     kraken2 --db {params.db} {params.general} --threads {threads} --report {output.report} {input.fw} {input.rv} 2>&1>{log}
     """
 
+# Identify MLST profile of assembled genome.
 rule mlst:
   input:
     "output/{timestamp}/genomes/{sample}.fasta"
@@ -175,6 +203,7 @@ rule mlst:
     mlst {input} 1>{output} 2>{log}
     """
 
+# Combine all FastQC reports into a multiqc report
 rule multiqc_fastqc:
   input:
     expand("tmp_data/{timestamp}/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2'], timestamp=config["timestamp"]),
@@ -186,6 +215,7 @@ rule multiqc_fastqc:
   wrapper:
     "0.78.0/bio/multiqc"
 
+# Combine Quast and Kraken reports into a single multiqc report
 rule multiqc_kraken:
   input:
     expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
@@ -197,6 +227,7 @@ rule multiqc_kraken:
   wrapper:
     "0.78.0/bio/multiqc"
 
+# Copy multiqc reports to the output folder
 rule copy_qc_reports:
   input:
     "tmp_data/{timestamp}/fastqc_report.html",
@@ -210,6 +241,7 @@ rule copy_qc_reports:
     cp {input} {output}
     """
 
+# Find all files to backup and create a tarball with a timestamp
 rule backup_data:
   input:
     genome = "output/{timestamp}/genomes/{sample}.fasta",
@@ -247,6 +279,7 @@ rule backup_data:
     rm -rf tmp_data/.backup
     """
 
+# Summarise the results in a csv file that will be included in the backup
 rule summary:
   input:
     kraken = expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
@@ -270,6 +303,7 @@ rule summary:
     python workflow/scripts/summary.py --timestamp {params.timestamp} {params.samples} 1> {output} 2>{log}
     """
 
+# Convert the summary file (csv format) to an Excel file and save this version in the output folder
 rule summary_to_xlsx:
   input:
     "backup/{timestamp}/summary.csv"
