@@ -1,7 +1,10 @@
+# Kraken config: only output report (not raw output), input is paired, gzipped data
+# Location of kraken2 database is provided
 kraken:
  general: "--output - --gzip-compressed --paired"
  db: "/home/vdputten/kraken_db_nohuman"
 
+# Shovill config for SLURM nodes (requires >64 Gb!)
 shovill:
  minlen: "500"
  ram: "64"
@@ -9,4 +12,5 @@ shovill:
  assembler: "spades"
  tmpdir: "$TMPDIR"
 
+# Default timestamp to prevent errors
 timestamp: "1950.01.01_00.00.00"

@@ -12,5 +12,8 @@ args = parser.parse_args()
 import openpyxl
 import pandas as pd
 
+# Read input csv table
 df = pd.read_csv(args.input, sep=',')
+
+# Output to xlsx using openpyxl
 df.to_excel(args.output, engine='openpyxl', index=None)
