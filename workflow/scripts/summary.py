@@ -68,7 +68,7 @@ for isolate in isolate_list:
   line = t.readline()
   # Parse identified PubMLST scheme and which ST was identified
   ST_SCHEME = str(line.split('\t')[1])
-  ST = str(line.split('\t')[2])
+  ST = str(line.split('\t')[2].rstrip('\n'))
   t.close()
 
   # Get quast report.tsv
