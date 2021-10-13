@@ -81,6 +81,7 @@ def check_bashrc():
     bashrc_path = os.path.expanduser('~/.bashrc')
     print('Adding export statement: "' + export_path_line  + '" to ' + bashrc_path)
     f = open(bashrc_path, 'a')
+    f.write('\n')
     f.write(export_path_line)
     f.close()
 
