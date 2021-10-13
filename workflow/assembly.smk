@@ -5,19 +5,37 @@ configfile: "workflow/config/config.yaml"
 
 # Identify sample names from the R1 read files in the input folder
 # The script check.py should have already checked whether all samples have a single R1 and R2 file associated with it and whether the input folder does not contain other files
-IDS, = glob_wildcards("input/{sample}_L001_R1_001.fastq.gz")
+(SAMPLE_NAMES, SAMPLE_NUMBERS) = glob_wildcards("input/{samplename}_{samplenumber}_L001_R1_001.fastq.gz")
+
+# Zip and join together all sample names and numbers. This will be used later on to find files to remove 
+SAMPLE_NAMES_NUMBERS = ['_'.join([samplename, samplenumber]) for samplename, samplenumber in zip(SAMPLE_NAMES, SAMPLE_NUMBERS)]
 
 # Define the desired output of the pipeline 
 rule all:
   input:
     expand("output/{timestamp}/qc_reports", timestamp=config["timestamp"]),
-    expand("backup/{timestamp}/{sample}.tar.gz", sample=IDS, timestamp=config["timestamp"]),
-    expand("output/{timestamp}/summary.xlsx", timestamp=config["timestamp"])
+    expand("backup/{timestamp}/{sample}.tar.gz", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
+    expand("output/{timestamp}/summary.xlsx", timestamp=config["timestamp"]),
+    expand("backup/{timestamp}/list_files_to_remove.txt", timestamp=config["timestamp"])
+
+# Remove illumina sample numbers from read file names and copy to scratch
+rule move_to_scratch:
+  output:
+    fw = "/scratch/reads/{timestamp}/{samplename}_L001_R1_001.fastq.gz",
+    rv = "/scratch/reads/{timestamp}/{samplename}_L001_R2_001.fastq.gz",
+  log:
+    "slurm/snakemake_logs/{timestamp}/move_to_scratch/{samplename}.log"
+  shell:
+    """
+    mkdir -p /scratch/reads
+    cp input/{wildcards.samplename}_S*_L001_R1_001.fastq.gz {output.fw}
+    cp input/{wildcards.samplename}_S*_L001_R2_001.fastq.gz {output.rv}
+    """
 
 # Run FastQC before read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R1:
   input:
-    "input/{sample}_L001_R1_001.fastq.gz"
+    "/scratch/reads/{timestamp}/{sample}_L001_R1_001.fastq.gz"
   output:
     html = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -31,7 +49,7 @@ rule fastqc_pre_R1:
 # Run FastQC before read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R2:
   input:
-    "input/{sample}_L001_R2_001.fastq.gz"
+    "/scratch/reads/{timestamp}/{sample}_L001_R2_001.fastq.gz"
   output:
     html = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -51,8 +69,8 @@ rule fastqc_pre_R2:
 # MINLEN:36 Remove reads shorter than 36 bp
 rule trimmomatic_pe:
   input:
-    r1 = "input/{sample}_L001_R1_001.fastq.gz",
-    r2 = "input/{sample}_L001_R2_001.fastq.gz"
+    r1 = "/scratch/reads/{timestamp}/{sample}_L001_R1_001.fastq.gz",
+    r2 = "/scratch/reads/{timestamp}/{sample}_L001_R2_001.fastq.gz"
   output:
     r1 = temp("tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz"),
     r2 = temp("tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz"),
@@ -206,8 +224,8 @@ rule mlst:
 # Combine all FastQC reports into a multiqc report
 rule multiqc_fastqc:
   input:
-    expand("tmp_data/{timestamp}/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2'], timestamp=config["timestamp"]),
-    expand("tmp_data/{timestamp}/fastqc_post_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2'], timestamp=config["timestamp"]),
+    expand("tmp_data/{timestamp}/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=SAMPLE_NAMES, read = ['R1', 'R2'], timestamp=config["timestamp"]),
+    expand("tmp_data/{timestamp}/fastqc_post_out/{sample}_{read}_fastqc.zip", sample=SAMPLE_NAMES, read = ['R1', 'R2'], timestamp=config["timestamp"]),
   output:
     temp("tmp_data/{timestamp}/fastqc_report.html")
   log:
@@ -218,8 +236,8 @@ rule multiqc_fastqc:
 # Combine Quast and Kraken reports into a single multiqc report
 rule multiqc_kraken:
   input:
-    expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
-    expand("tmp_data/{timestamp}/quast_out/{sample}", sample=IDS, timestamp=config["timestamp"])
+    expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
+    expand("tmp_data/{timestamp}/quast_out/{sample}", sample=SAMPLE_NAMES, timestamp=config["timestamp"])
   output:
     temp("tmp_data/{timestamp}/kraken_quast_report.html")
   log:
@@ -282,19 +300,19 @@ rule backup_data:
 # Summarise the results in a csv file that will be included in the backup
 rule summary:
   input:
-    kraken = expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
-    quast = expand("tmp_data/{timestamp}/quast_out/{sample}", sample=IDS, timestamp=config["timestamp"]),
-    fastqc_pre = expand("tmp_data/{timestamp}/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2'], timestamp=config["timestamp"]),
-    fastqc_post = expand("tmp_data/{timestamp}/fastqc_post_out/{sample}_{read}_fastqc.zip", sample=IDS, read = ['R1', 'R2'], timestamp=config["timestamp"]),
-    mlst = expand("tmp_data/{timestamp}/mlst_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
-    coverage = expand("tmp_data/{timestamp}/coverage_out/{sample}.txt", sample=IDS, timestamp=config["timestamp"]),
+    kraken = expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
+    quast = expand("tmp_data/{timestamp}/quast_out/{sample}", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
+    fastqc_pre = expand("tmp_data/{timestamp}/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=SAMPLE_NAMES, read = ['R1', 'R2'], timestamp=config["timestamp"]),
+    fastqc_post = expand("tmp_data/{timestamp}/fastqc_post_out/{sample}_{read}_fastqc.zip", sample=SAMPLE_NAMES, read = ['R1', 'R2'], timestamp=config["timestamp"]),
+    mlst = expand("tmp_data/{timestamp}/mlst_out/{sample}.txt", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
+    coverage = expand("tmp_data/{timestamp}/coverage_out/{sample}.txt", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
   output:
     "backup/{timestamp}/summary.csv"
   conda:
     "envs/python.yaml"
   params:
     timestamp = config["timestamp"],
-    samples = IDS
+    samples = SAMPLE_NAMES
   log:
     "slurm/snakemake_logs/{timestamp}/summary.log"
   threads: 1
@@ -317,4 +335,22 @@ rule summary_to_xlsx:
   shell:
     """
     python workflow/scripts/summary_to_xlsx.py {input} {output} 2>&1>{log}
+    """
+
+# List files based on SAMPLE_NAMES_NUMBERS that should be removed
+rule list_files_for_removal:
+  input:
+    summary = "output/{timestamp}/summary.xlsx",
+    fw_read_files = expand("input/{sample_name_number}_L001_R1_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
+    rv_read_files = expand("input/{sample_name_number}_L001_R2_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
+  output:
+    "backup/{timestamp}/list_files_to_remove.txt"
+  log:
+    "slurm/snakemake_logs/{timestamp}/list_files_for_removal.log"
+  shell:
+    """
+    for file in {input.fw_read_files} {input.rv_read_files}
+    do
+      echo "$file"
+    done > {output}
     """
