@@ -6,3 +6,5 @@ input/*
 snakemake.job
 slurm*
 .email*
+bin/analyse_runs
+workflow/scripts/utils/__pycache__

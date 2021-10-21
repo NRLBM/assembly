@@ -2,7 +2,7 @@
 # Location of kraken2 database is provided
 kraken:
  general: "--output - --gzip-compressed --paired"
- db: "/home/vdputten/kraken_db_nohuman"
+ db: "/home/nvsorge/kraken2_database"
 
 # Shovill config for SLURM nodes (requires >64 Gb!)
 shovill:

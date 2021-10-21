@@ -180,8 +180,33 @@ def check_email():
     if not checkpoint:
       input_email(person)
 
+def ln_analyse_runs():
+  '''
+  Create a symlink in PATH to analyse_runs.py
+
+  Parameters
+  ----------
+  None
+
+  Returns
+  -------
+  None
+
+  Raises
+  ------
+  None
+
+  '''
+  full_path = os.path.abspath('workflow/scripts/analyse_runs.py')
+  executable_target = 'bin/analyse_runs'
+
+  subprocess.run(['ln', '-s', full_path, executable_target])
+  subprocess.run(['chmod', 'u+x', executable_target])
+
+
 if __name__ == '__main__':
   check_version()
   check_bashrc()
   check_email()
+  ln_analyse_runs()
   print('All checks passed')
