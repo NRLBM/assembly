@@ -1,0 +1,4 @@
+channels:
+- bioconda
+dependencies:
+- ectyper=1.0.0
