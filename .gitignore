@@ -2,6 +2,7 @@
 tmp_data
 output
 backup
+list_*
 input/*
 snakemake.job
 slurm*

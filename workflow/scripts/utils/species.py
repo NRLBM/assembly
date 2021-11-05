@@ -22,7 +22,6 @@ def species(args):
     df = read_summaries(list_all_summaries)
     print_species_count(df)
 
-
 def print_species_count(df):
   species_counts = df['Top species'].value_counts()
   df_species_counts = pd.DataFrame({'Species': species_counts.index, 'Count': species_counts})
