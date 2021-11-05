@@ -8,3 +8,4 @@ slurm*
 .email*
 bin/analyse_runs
 workflow/scripts/utils/__pycache__
+all_paired.fa

@@ -64,7 +64,7 @@ def plot_subparser(subparsers):
   setting_args = group.add_argument_group('Settings')
   setting_args.add_argument("-c", "--columns", dest="columns", help="Columns to plot", metavar="COLUMNS", choices=['depth', 'N50', 'assembly_size', 'nr_reads_top_species', 'pct_top_species', 'ST', 'nr_contigs', 'all'], required=True, type=str, nargs='+')
   setting_args.add_argument("-s", "--species", dest='species', help='Species to plot', metavar="SPECIES", choices=['Escherichia coli', 'Neisseria meningitidis', 'Haemophilus influenzae'], required=True)
-  setting_args.add_argument("--config", dest='config', help='Config file for plotting settings', metavar="CONFIG FILE", default='settings.json')
+  setting_args.add_argument("--config", dest='config', help='Config file for plotting settings', metavar="CONFIG FILE", default='workflow/config/plot_settings.json')
 
 if __name__ == '__main__':
   main()
