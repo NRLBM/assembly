@@ -1,0 +1,4 @@
+channels:
+- bioconda
+dependencies:
+- ncbi-amrfinderplus==3.10.18

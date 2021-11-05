@@ -12,5 +12,24 @@ shovill:
  assembler: "spades"
  tmpdir: "$TMPDIR"
 
+pubmlst:
+ ecoli_mlst_scheme: "https://rest.pubmlst.org/db/pubmlst_escherichia_seqdef/schemes/1/sequence"
+ ecoli_mlst_loci: "adk,fumC,gyrB,icd,mdh,purA,recA"
+ ecoli_cgmlst_scheme: "https://rest.pubmlst.org/db/pubmlst_escherichia_seqdef/schemes/6/sequence"
+ nmen_mlst_scheme: "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/1/sequence"
+ nmen_mlst_loci: "abcZ,adk,aroE,fumC,gdh,pdhC,pgm"
+ nmen_vaccine_antigen_scheme: "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/77/sequence"
+ nmen_cgmlst_scheme: "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/47/sequence"
+
+ectyper:
+ general: "--sequence"
+
+abricate:
+ fimH_db: "fimtyper_db"
+ fimH_datadir: "workflow/db"
+ VFDB_db: "vfdb"
+ minid: 90
+ mincov: 70
+
 # Default timestamp to prevent errors
 timestamp: "1950.01.01_00.00.00"
