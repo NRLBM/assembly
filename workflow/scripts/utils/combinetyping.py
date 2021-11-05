@@ -11,7 +11,6 @@ def combinetyping(args):
     args.species == "Nmen"
   list_all_summaries = glob_all_typing_summaries(args.inputdir, args.species)
   df = read_typing_summaries(list_all_summaries)
-  print('index' in df.columns)
   year_series = df['Isolate'].apply(parse_year)
   df.insert(1, 'year', year_series)
   df.to_csv(args.output, sep = '\t', index=False)
