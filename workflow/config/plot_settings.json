@@ -1,0 +1,36 @@
+{
+  "N50": {
+    "name": "N50",
+    "binwidth": 10000,
+    "type": "histplot"
+  },
+  "assembly_size": {
+    "name": "Total assembly size",
+    "binwidth": 100000,
+    "type": "histplot"
+  },
+  "depth": {
+    "name": "Sequencing depth",
+    "binwidth": 1,
+    "type": "histplot"
+  },
+  "nr_reads_top_species": {
+    "name": "Number of reads top species",
+    "binwidth": 10000,
+    "type": "histplot"
+  },
+  "pct_top_species": {
+    "name": "Pct top species",
+    "binwidth": 5,
+    "type": "histplot"
+  },
+  "nr_contigs": {
+    "name": "Number of contigs",
+    "binwidth": 10,
+    "type": "histplot"
+  },
+  "ST": {
+    "name": "ST",
+    "type": "countplot"
+  }
+}
