@@ -80,7 +80,7 @@ rule trimmomatic_pe:
     "slurm/snakemake_logs/{timestamp}/trimmomatic/{sample}.log"
   params:
     # list of trimmers (see manual)
-    trimmer=["ILLUMINACLIP:all_paired.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36"],
+    trimmer=["ILLUMINACLIP:workflow/db/all_paired.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:36"],
     # optional parameters
     extra="",
     compression_level="-9"
