@@ -1,0 +1,37 @@
+name: general
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.8, 3.9, 3.10]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: actions/checkout@v2
+      with:
+        repository: NRLBM/assembly
+        path: assembly
+    - name: test bexsero_coverage.py
+      run: |
+        cd $GITHUB_WORKSPACE/assembly
+        python workflow/scripts/bexsero_coverage.py --input test/bexsero_coverage/covered.json --output test/bexsero_coverage/covered_output.tsv
+        cmp test/bexsero_coverage/covered_output.tsv test/bexsero_coverage/correct/covered.tsv
+
+        python workflow/scripts/bexsero_coverage.py --input test/bexsero_coverage/uncovered.json --output test/bexsero_coverage/uncovered_output.tsv
+        cmp test/bexsero_coverage/uncovered_output.tsv test/bexsero_coverage/correct/uncovered.tsv
+
+        python workflow/scripts/bexsero_coverage.py --input test/bexsero_coverage/unpredictable.json --output test/bexsero_coverage/unpredictable_output.tsv
+        cmp test/bexsero_coverage/unpredictable_output.tsv test/bexsero_coverage/correct/unpredictable.tsv
+
+        
