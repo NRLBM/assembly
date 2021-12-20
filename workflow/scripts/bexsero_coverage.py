@@ -4,7 +4,6 @@ import json
 import pandas as pd
 import argparse
 import os
-import sys
 
 parser = argparse.ArgumentParser(description='Predict vaccine coverage based on gMATS method')
 
@@ -164,11 +163,9 @@ df = pd.DataFrame({'Isolate': isolate_name, 'Bexsero_coverage_gMATS': decision_g
 'fHbp_coverage_BAST': results_dict['fHbp_peptide', 'BAST'], 'NHBA_coverage_BAST': results_dict['NHBA_peptide', 'BAST'], 'NadA_coverage_BAST': results_dict['NadA_peptide', 'BAST'], 'PorA_VR2_coverage_BAST': results_dict['PorA_VR2', 'BAST'],
 'fHbp_allele': results_dict['fHbp_peptide', 'alleles'], 'NHBA_allele': results_dict['NHBA_peptide', 'alleles'], 'NadA_allele': results_dict['NadA_peptide', 'alleles'], 'PorA_VR2_allele': results_dict['PorA_VR2', 'alleles']}, index=[0])
 
-#print(list(df.columns), file=sys.stderr)
 
 # Order dataframe columns as this is not guaranteed for Python<3.7.4
 df = df[["Isolate", "Bexsero_coverage_gMATS", "Bexsero_coverage_BAST", "fHbp_coverage_gMATS", "NHBA_coverage_gMATS", "NadA_coverage_gMATS", "PorA_VR2_coverage_gMATS", "fHbp_coverage_BAST", "NHBA_coverage_BAST", "NadA_coverage_BAST", "PorA_VR2_coverage_BAST", "fHbp_allele", "NHBA_allele", "NadA_allele", "PorA_VR2_allele"]]
-# list from error: ['Bexsero_coverage_BAST', 'Bexsero_coverage_gMATS', 'Isolate', 'NHBA_allele', 'NHBA_coverage_BAST', 'NHBA_coverage_gMATS', 'NadA_allele', 'NadA_coverage_BAST', 'NadA_coverage_gMATS', 'PorA_VR2_allele', 'PorA_VR2_coverage_BAST', 'PorA_VR2_coverage_gMATS', 'fHbp_allele', 'fHbp_coverage_BAST', 'fHbp_coverage_gMATS']
 
 df.to_csv(args.output, sep = '\t', index=False)
 
