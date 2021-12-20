@@ -30,6 +30,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/assembly
         python workflow/scripts/bexsero_coverage.py --input test/bexsero_coverage/covered.json --output test/bexsero_coverage/covered_output.tsv
+        cat test/bexsero_coverage/covered_output.tsv
         cmp test/bexsero_coverage/covered_output.tsv test/bexsero_coverage/correct/covered.tsv
 
         python workflow/scripts/bexsero_coverage.py --input test/bexsero_coverage/uncovered.json --output test/bexsero_coverage/uncovered_output.tsv
