@@ -304,7 +304,7 @@ rule gMATS_coverage_Nmen:
     "slurm/snakemake_logs/{timestamp}/gMATS_coverage_Nmen/{sample}.log"
   shell:
     """
-    python workflow/scripts/gMATS_coverage.py --input {input.json} --output {output.tsv} 2>&1>{log}
+    python workflow/scripts/bexsero_coverage.py --input {input.json} --output {output.tsv} 2>&1>{log}
     """
 
 rule ABRicate_VFDB_Nmen:
