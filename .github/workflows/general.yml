@@ -25,7 +25,11 @@ jobs:
     - name: install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas
+        pip install pandas flake8
+    - name: lint bexsero_coverage.py
+      run: |
+        cd $GITHUB_WORKSPACE/assembly
+        flake8 --ignore E111 --max-line-length 130 workflow/scripts/bexsero_coverage.py
     - name: test bexsero_coverage.py
       run: |
         cd $GITHUB_WORKSPACE/assembly
