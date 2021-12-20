@@ -1,0 +1,22 @@
+{
+  "exact_matches": {
+    "NEIS0349": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/NEIS0349/alleles/84",
+        "allele_id": "84"
+      }
+    ],
+    "fHbp_peptide": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/fHbp_peptide/alleles/4",
+        "allele_id": "4"
+      }
+    ],
+    "PorA_VR2": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/PorA_VR2/alleles/16-3",
+        "allele_id": "16-3"
+      }
+    ]
+  }
+}

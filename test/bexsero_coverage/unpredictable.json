@@ -1,0 +1,46 @@
+{
+  "exact_matches": {
+    "NEIS2109": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/NEIS2109/alleles/17",
+        "allele_id": "17"
+      }
+    ],
+    "NEIS0349": [
+      {
+        "allele_id": "1",
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/NEIS0349/alleles/1"
+      }
+    ],
+    "NHBA_peptide": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/NHBA_peptide/alleles/29",
+        "allele_id": "29"
+      }
+    ],
+    "NadA_peptide": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/NadA_peptide/alleles/6",
+        "allele_id": "6"
+      }
+    ],
+    "NEIS1969": [
+      {
+        "allele_id": "5",
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/NEIS1969/alleles/5"
+      }
+    ],
+    "fHbp_peptide": [
+      {
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/fHbp_peptide/alleles/22",
+        "allele_id": "22"
+      }
+    ],
+    "PorA_VR2": [
+      {
+        "allele_id": "2",
+        "href": "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/loci/PorA_VR2/alleles/2"
+      }
+    ]
+  }
+}
