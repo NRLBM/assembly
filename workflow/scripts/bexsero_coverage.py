@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import argparse
 import os
+import sys
 
 parser = argparse.ArgumentParser(description='Predict vaccine coverage based on gMATS method')
 
