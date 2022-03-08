@@ -6,10 +6,9 @@ def get_samples_from_qc_report(qc_report_file, timestamp):
   tmp_list = []
   full_path_qc_file = ''.join(['backup/', timestamp, '/', qc_report_file])
   with open(full_path_qc_file) as qc_file:
-    lines = qc_file.readlines()
+    lines = qc_file.readlines()[1:]
   for line in lines:
-    if line.split('\t')[-1].rstrip('\n') == 'PASS':
-      tmp_list.append(line.split('\t')[0])
+    tmp_list.append(line.split('\t')[0])
   return tmp_list
 
 ECOLI_SAMPLES = get_samples_from_qc_report('qc_report_ecoli.tsv', config["timestamp"])
@@ -190,7 +189,8 @@ rule typing_summary_csv_Ecoli:
     expand("tmp_data/{timestamp}/MLST_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/AMRfinder_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/ABRicate_fimH_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]),
-    expand("tmp_data/{timestamp}/ABRicate_VFDB_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"])
+    expand("tmp_data/{timestamp}/ABRicate_VFDB_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]),
+    qc_report = expand("backup/{timestamp}/qc_report_ecoli.tsv", timestamp=config["timestamp"]),
   output:
     "backup/{timestamp}/Ecoli_typing_summary.tsv"
   conda:
@@ -203,7 +203,7 @@ rule typing_summary_csv_Ecoli:
     "slurm/snakemake_logs/{timestamp}/Ecoli_typing_summary.log"
   shell:
     """
-    python workflow/scripts/typing_summary.py --species Ecoli --timestamp {params.timestamp} --output {output} --mlst MLST_Ecoli --amrfinder AMRfinder_Ecoli --vfdb ABRicate_VFDB_Ecoli {params.samples} 2>&1>{log}
+    python workflow/scripts/typing_summary.py --species Ecoli --timestamp {params.timestamp} --output {output} --qc {input.qc_report} --mlst MLST_Ecoli --amrfinder AMRfinder_Ecoli --vfdb ABRicate_VFDB_Ecoli {params.samples} 2>&1>{log}
     """
 
 # Convert the summary file (tsv format) to an Excel file and save this version in the output folder
@@ -362,7 +362,8 @@ rule typing_summary_csv_Nmen:
     expand("tmp_data/{timestamp}/gMATS_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/MLST_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/AMRfinder_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
-    expand("tmp_data/{timestamp}/ABRicate_VFDB_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"])
+    expand("tmp_data/{timestamp}/ABRicate_VFDB_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
+    qc_report = expand("backup/{timestamp}/qc_report_nmen.tsv", timestamp=config["timestamp"]),
   output:
     "backup/{timestamp}/Nmen_typing_summary.tsv"
   conda:
@@ -375,7 +376,7 @@ rule typing_summary_csv_Nmen:
     "slurm/snakemake_logs/{timestamp}/Nmen_typing_summary.log"
   shell:
     """
-    python workflow/scripts/typing_summary.py --species Nmen --timestamp {params.timestamp} --output {output} --mlst MLST_Nmen --amrfinder AMRfinder_Nmen --vfdb ABRicate_VFDB_Nmen {params.samples} 2>&1>{log}
+    python workflow/scripts/typing_summary.py --species Nmen --timestamp {params.timestamp} --qc {input.qc_report} --output {output} --mlst MLST_Nmen --amrfinder AMRfinder_Nmen --vfdb ABRicate_VFDB_Nmen {params.samples} 2>&1>{log}
     """
 
 # Convert the summary file (tsv format) to an Excel file and save this version in the output folder

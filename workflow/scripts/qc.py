@@ -36,14 +36,14 @@ def qc_filter_species(df_species, thresholds_dict):
   df_out['Total assembly size'] = np.select([(df_species['Total assembly size'] >= min_genome_size) & (df_species['Total assembly size'] <= max_genome_size)], ['PASS'], default='FAIL')
   df_out['Sequencing depth'] = np.select([df_species['Sequencing depth'] >= min_sequencing_depth], ['PASS'], default='FAIL')
   df_out['Number of contigs'] = np.select([df_species['Number of contigs'] <= max_number_contigs], ['PASS'], default='FAIL')
-  df_out['Decision'] = np.select([(df_out.iloc[:,1:] == 'PASS').all(axis=1)], ['PASS'], default='FAIL')
+  df_out['QC_decision'] = np.select([(df_out.iloc[:,1:] == 'PASS').all(axis=1)], ['PASS'], default='FAIL')
   return df_out
 
 def remove_specific_samples(df_qc_filtered, exclusion_list):
   if len(exclusion_list) == 0:
     return df_qc_filtered
   else:
-    df_qc_filtered.loc[df_qc_filtered['Sample'].isin(exclusion_list), 'Decision'] = 'MANUALLY_EXCLUDED'
+    df_qc_filtered.loc[df_qc_filtered['Sample'].isin(exclusion_list), 'QC_decision'] = 'MANUALLY_EXCLUDED'
     return df_qc_filtered
 
 def save_output(df_out, output):

@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser(description='Summarise typed isolates')
 
 parser.add_argument('samples', nargs='+', help="List of sample names to summarise", type=str)
 parser.add_argument('--species', dest='species', help="Species to summarise", choices=['Escherichia coli', 'Neisseria meningitidis', 'Ecoli', 'Nmen'], type=str, required=True)
+parser.add_argument('--qc', dest='qc', help="Path to QC report", type=str, required=True)
 parser.add_argument('--mlst', dest="mlst", help="mlst output directory", type=str)
 parser.add_argument('--gmats', dest="gmats", help="gMATS output directory", type=str, default="gMATS_Nmen")
 parser.add_argument('--amrfinder', dest="amrfinder", help="AMRfinder output directory", type=str)
@@ -81,6 +82,16 @@ def parse_vfdb(gene, lines):
     output_string = output_string + str(i[-1:])
   return output_string
 
+def add_qc_results(full_df, qc_df_path):
+  qc_df = pd.read_csv(qc_df_path, sep='\t')
+  full_df = qc_df.merge(full_df, left_on='Sample', right_on='Isolate', how='right', validate='one_to_one')
+
+  full_df = full_df.fillna('-')
+
+  return full_df
+
+
+
 def process_ecoli(args):
   full_df = pd.DataFrame()
 
@@ -117,6 +128,9 @@ def process_ecoli(args):
 
     full_df = full_df.append(isolate_df)
 
+  # Read QC table and merge
+  full_df = add_qc_results(full_df, args.qc)
+
   return full_df
 
 def process_nmen(args):
@@ -150,6 +164,8 @@ def process_nmen(args):
       isolate_df[VFDB_gene] = parse_vfdb(VFDB_gene, lines)
 
     full_df = full_df.append(isolate_df)
+
+  full_df = add_qc_results(full_df, args.qc)
 
   return full_df
 
