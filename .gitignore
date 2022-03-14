@@ -9,4 +9,5 @@ slurm*
 .email*
 bin/analyse_runs
 workflow/scripts/utils/__pycache__
+workflow/db/mash_databases/*
 all_paired.fa

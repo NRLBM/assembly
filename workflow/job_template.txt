@@ -20,9 +20,10 @@ snakemake -s workflow/assembly.smk --config timestamp="$TIMESTAMP" -j 16 --use-c
 # Perform QC
 python workflow/scripts/qc.py --species "Escherichia coli" --timestamp "$TIMESTAMP" --output "backup/${TIMESTAMP}/qc_report_ecoli.tsv"
 python workflow/scripts/qc.py --species "Neisseria meningitidis" --timestamp "$TIMESTAMP" --output "backup/${TIMESTAMP}/qc_report_nmen.tsv"
+python workflow/scripts/qc.py --species "Streptococcus pyogenes" --timestamp "$TIMESTAMP" --output "backup/${TIMESTAMP}/qc_report_spyo.tsv"
 
 # Typing snakemake command
-snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_typing_${TIMESTAMP}.json"
+snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_typing_${TIMESTAMP}.json" --notemp
 
 # Snakemake command to create report in backup folder
 snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_typing_${TIMESTAMP}.html"

@@ -31,7 +31,7 @@ def read_qc_filter_thresholds(species, thresholds_file):
 def qc_filter_species(df_species, thresholds_dict):
   min_N50, min_genome_size, max_genome_size, min_sequencing_depth, max_number_contigs = thresholds_dict['min_N50'], thresholds_dict['min_genome_size'], thresholds_dict['max_genome_size'], thresholds_dict['min_sequencing_depth'], thresholds_dict['max_number_contigs']
   df_out = pd.DataFrame()
-  df_out['Sample'] = df_species['Sample']
+  df_out['Isolate'] = df_species['Isolate']
   df_out['N50'] = np.select([df_species['N50'] >= min_N50], ['PASS'], default='FAIL')
   df_out['Total assembly size'] = np.select([(df_species['Total assembly size'] >= min_genome_size) & (df_species['Total assembly size'] <= max_genome_size)], ['PASS'], default='FAIL')
   df_out['Sequencing depth'] = np.select([df_species['Sequencing depth'] >= min_sequencing_depth], ['PASS'], default='FAIL')

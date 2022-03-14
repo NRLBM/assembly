@@ -13,6 +13,7 @@ def get_samples_from_qc_report(qc_report_file, timestamp):
 
 ECOLI_SAMPLES = get_samples_from_qc_report('qc_report_ecoli.tsv', config["timestamp"])
 NMEN_SAMPLES = get_samples_from_qc_report('qc_report_nmen.tsv', config["timestamp"])
+SPYO_SAMPLES = get_samples_from_qc_report('qc_report_spyo.tsv', config["timestamp"])
 
 all_output = []
 
@@ -35,6 +36,11 @@ if len(NMEN_SAMPLES) > 0:
   all_output.append(expand("output/{timestamp}/Nmen_typing_summary.xlsx", timestamp=config["timestamp"]))
   all_output.append(expand("backup/{timestamp}/Nmen_typing_summary.tsv", timestamp=config["timestamp"]))
   all_output.append(expand("backup/{timestamp}/Nmen_typing/{sample}_typing.tar.gz", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
+
+if len(SPYO_SAMPLES) > 0:
+  all_output.append(expand("output/{timestamp}/Spyo_typing_summary.xlsx", timestamp=config["timestamp"]))
+  all_output.append(expand("backup/{timestamp}/Spyo_typing_summary.tsv", timestamp=config["timestamp"]))
+  all_output.append(expand("backup/{timestamp}/Spyo_typing/{sample}_typing.tar.gz", sample=SPYO_SAMPLES, timestamp=config["timestamp"]))
 
 if len(all_output) == 0:
   print("No samples to process", file=sys.stderr)
@@ -93,7 +99,7 @@ rule AMRFinder_ecoli:
   shell:
     """
     amrfinder -u
-    amrfinder --threads {threads} --nucleotide {input} --organism {params.organism} --output {output} 2>&1>{log}    
+    amrfinder --threads 4 --nucleotide {input} --organism {params.organism} --output {output} 2>&1>{log}    
     """
 
 rule ECtyper_ecoli:
@@ -389,6 +395,165 @@ rule typing_summary_to_xlsx_Nmen:
     "envs/python.yaml"
   log:
     "slurm/snakemake_logs/{timestamp}/Nmen_typing_summary_to_xlsx.log"
+  threads: 16
+  shell:
+    """
+    python workflow/scripts/summary_to_xlsx.py -d '\t' {input} {output} 2>&1>{log}
+    """
+
+# Streptococcus pyogenes typing
+rule MLST_spyo:
+  input:
+    genome = "output/{timestamp}/genomes/{sample}.fasta"
+  output:
+    json = temp("tmp_data/{timestamp}/MLST_Spyo/{sample}.json")
+  threads: 8
+  params:
+    scheme = config['pubmlst']['spyo_mlst_scheme']
+  conda:
+    "envs/python.yaml"
+  log:
+    "slurm/snakemake_logs/{timestamp}/MLST_Spyo_PubMLST_API/{sample}.log"
+  shell:
+    """
+    python workflow/scripts/type_pubmlst_api.py --genome {input.genome} --api-url {params.scheme} 1> {output.json} 2>{log}
+    """
+
+rule convert_MLST_spyo:
+  input:
+    "tmp_data/{timestamp}/MLST_Spyo/{sample}.json"
+  output:
+    temp("tmp_data/{timestamp}/MLST_Spyo/{sample}.tsv")
+  threads: 1
+  conda:
+    "envs/python.yaml"
+  params:
+    loci = config['pubmlst']['spyo_mlst_loci']
+  log:
+    "slurm/snakemake_logs/{timestamp}/MLST_Spyo_convert/{sample}.log"
+  shell:
+    """
+    python workflow/scripts/convert_MLST.py --input {input} --output {output} --loci {params.loci}
+    """
+
+rule emmtyper_spyo:
+  input:
+    genome = "output/{timestamp}/genomes/{sample}.fasta"
+  output:
+    tsv = temp("tmp_data/{timestamp}/emmtyper_Spyo/{sample}.tsv")
+  threads: 8
+  conda:
+    "envs/emmtyper.yaml"
+  log:
+    "slurm/snakemake_logs/{timestamp}/emmtyper_Spyo/{sample}.log"
+  shell:
+    """
+    emmtyper --output-format verbose {input.genome} > {output.tsv}
+    """
+
+rule gunzip_ref:
+  input:
+    "workflow/references/MGAS5005.gbk.gz"
+  output:
+    temp("tmp_data/{timestamp}/references/MGAS5005.gbk")
+  threads: 16
+  shell:
+    """
+    gunzip -c {input} > {output}
+    """
+
+rule snippy_M1UK_Spyo:
+  input:
+    genome = "output/{timestamp}/genomes/{sample}.fasta",
+    ref = "tmp_data/{timestamp}/references/MGAS5005.gbk"
+  output:
+    temp(directory("tmp_data/{timestamp}/snippy_M1UK_Spyo/{sample}"))
+  log:
+    "slurm/snakemake_logs/{timestamp}/snippy_M1UK_Spyo/{sample}.log"
+  params:
+    general = config["snippy"]["general"]
+  threads: 16
+  conda: "envs/snippy.yaml"
+  shell:
+    """
+    snippy {params.general} --cpus {threads} --outdir {output} --ref {input.ref} --contigs {input.genome} 2>&1>{log}
+    """
+
+rule compare_SNPs:
+  input:
+    snippy = "tmp_data/{timestamp}/snippy_M1UK_Spyo/{sample}",
+    ref = "workflow/references/M1UK.vcf"
+  output:
+    "tmp_data/{timestamp}/M1UK_SNPs_Spyo/{sample}.tsv"
+  conda:
+    "envs/compare_SNPs.yaml"
+  threads: 1
+  log:
+    "slurm/snakemake_logs/{timestamp}/compare_SNPs/{sample}.log"
+  shell:
+    """
+    bgzip --keep --force {input.snippy}/snps.vcf 2>&1>{log}
+    bcftools index {input.snippy}/snps.vcf.gz 2>&1>>{log}
+    bcftools view -O v -R {input.ref} {input.snippy}/snps.vcf.gz 2>>{log} | vt decompose_blocksub -o - - 2>>{log} | python workflow/scripts/compare_SNPs.py --ref {input.ref} --extended > {output} 2>>{log}
+    """
+
+# Find all files to backup and create a tarball with a timestamp
+rule backup_data_spyo:
+  input:
+    M1UK_tsv = "tmp_data/{timestamp}/M1UK_SNPs_Spyo/{sample}.tsv",
+    emmtyper_tsv = "tmp_data/{timestamp}/emmtyper_Spyo/{sample}.tsv",
+    MLST_tsv = "tmp_data/{timestamp}/MLST_Spyo/{sample}.tsv",
+    MLST_json = "tmp_data/{timestamp}/MLST_Spyo/{sample}.json",
+  output:
+    "backup/{timestamp}/Spyo_typing/{sample}_typing.tar.gz"
+  params:
+    sample = "{sample}",
+    timestamp = config["timestamp"]
+  threads: 16
+  shell:
+    """
+    mkdir -p tmp_data/.backup/{params.sample}/MLST_PubMLST
+    mkdir -p tmp_data/.backup/{params.sample}/emmtyper
+    mkdir -p tmp_data/.backup/{params.sample}/M1UK_SNPs
+    cp {input.emmtyper_tsv} tmp_data/.backup/{params.sample}/emmtyper
+    cp {input.MLST_tsv} tmp_data/.backup/{params.sample}/MLST_PubMLST
+    cp {input.MLST_json} tmp_data/.backup/{params.sample}/MLST_PubMLST
+    cp {input.M1UK_tsv} tmp_data/.backup/{params.sample}/M1UK_SNPs
+    tar zcvf {output} -C tmp_data/.backup {params.sample}
+    rm -rf tmp_data/.backup
+    """
+
+rule typing_summary_csv_Spyo:
+  input:
+    expand("tmp_data/{timestamp}/M1UK_SNPs_Spyo/{sample}.tsv", sample=SPYO_SAMPLES, timestamp=config["timestamp"]),
+    expand("tmp_data/{timestamp}/emmtyper_Spyo/{sample}.tsv", sample=SPYO_SAMPLES, timestamp=config["timestamp"]),
+    expand("tmp_data/{timestamp}/MLST_Spyo/{sample}.tsv", sample=SPYO_SAMPLES, timestamp=config["timestamp"]),
+    qc_report = expand("backup/{timestamp}/qc_report_spyo.tsv", timestamp=config["timestamp"]),
+  output:
+    "backup/{timestamp}/Spyo_typing_summary.tsv"
+  conda:
+    "envs/python.yaml"
+  params:
+    timestamp = config["timestamp"],
+    samples = SPYO_SAMPLES
+  threads: 16
+  log:
+    "slurm/snakemake_logs/{timestamp}/Spyo_typing_summary.log"
+  shell:
+    """
+    python workflow/scripts/typing_summary.py --species Spyo --timestamp {params.timestamp} --qc {input.qc_report} --output {output} --M1UK M1UK_SNPs_Spyo --mlst MLST_Spyo --emmtyper emmtyper_Spyo {params.samples} 2>&1>{log}
+    """
+
+# Convert the summary file (tsv format) to an Excel file and save this version in the output folder
+rule typing_summary_to_xlsx_Spyo:
+  input:
+    "backup/{timestamp}/Spyo_typing_summary.tsv"
+  output:
+    "output/{timestamp}/Spyo_typing_summary.xlsx"
+  conda:
+    "envs/python.yaml"
+  log:
+    "slurm/snakemake_logs/{timestamp}/Spyo_typing_summary_to_xlsx.log"
   threads: 16
   shell:
     """

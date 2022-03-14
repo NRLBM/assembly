@@ -2,11 +2,12 @@
 
 import argparse
 import pandas as pd
+import os
 
 parser = argparse.ArgumentParser(description='Summarise typed isolates')
 
 parser.add_argument('samples', nargs='+', help="List of sample names to summarise", type=str)
-parser.add_argument('--species', dest='species', help="Species to summarise", choices=['Escherichia coli', 'Neisseria meningitidis', 'Ecoli', 'Nmen'], type=str, required=True)
+parser.add_argument('--species', dest='species', help="Species to summarise", choices=['Escherichia coli', 'Neisseria meningitidis', 'Ecoli', 'Nmen', 'Streptococcus pyogenes', 'Spyo'], type=str, required=True)
 parser.add_argument('--qc', dest='qc', help="Path to QC report", type=str, required=True)
 parser.add_argument('--mlst', dest="mlst", help="mlst output directory", type=str)
 parser.add_argument('--gmats', dest="gmats", help="gMATS output directory", type=str, default="gMATS_Nmen")
@@ -14,24 +15,31 @@ parser.add_argument('--amrfinder', dest="amrfinder", help="AMRfinder output dire
 parser.add_argument('--ectyper', dest="ectyper", help="ECtyper output directory", type=str, default="ectyper_Ecoli")
 parser.add_argument('--fimtyper', dest="fimtyper", help="ABRicate Fimtyper output directory", type=str, default="ABRicate_fimH_Ecoli")
 parser.add_argument('--vfdb', dest="vfdb", help="ABRicate VFDB output directory", type=str)
+parser.add_argument('--emmtyper', dest="emmtyper", help="emmtyper output directory", type=str, default="emmtyper_Spyo")
+parser.add_argument('--M1UK', dest="M1UK", help="M1UK mapping output directory", type=str, default="M1UK_Spyo")
 parser.add_argument('--timestamp', dest="timestamp", help="Timestamp of analysis", type=str, required=True)
 parser.add_argument('--output', dest='output', help="Output file", type=str, required=True)
 
 args = parser.parse_args()
 
 if (args.species == "Escherichia coli") or (args.species == "Ecoli"):
-  args.species == "Ecoli"
+  args.species = "Ecoli"
   assert args.mlst is not None
   assert args.amrfinder is not None
   assert args.ectyper is not None
   assert args.fimtyper is not None
   assert args.vfdb is not None
 elif (args.species == "Neisseria meningitidis") or (args.species == "Nmen"):
-  args.species == "Nmen"
+  args.species = "Nmen"
   assert args.mlst is not None
   assert args.amrfinder is not None
   assert args.vfdb is not None
   assert args.gmats is not None
+elif (args.species == "Streptococcus pyogenes") or (args.species == "Spyo"):
+  args.species = "Spyo"
+  assert args.mlst is not None
+  assert args.emmtyper is not None
+  assert args.M1UK is not None
 
 # Store samples as isolate_list
 isolate_list = list(args.samples)
@@ -82,15 +90,21 @@ def parse_vfdb(gene, lines):
     output_string = output_string + str(i[-1:])
   return output_string
 
+def parse_M1UK(row):
+  if row['emm_type'] != 'EMM1.0':
+    return 'non-M1'
+  elif row['exact_match'] == 27:
+    return 'M1UK'
+  elif row['exact_match'] > 14:
+    return 'check_manually'
+  else:
+    return 'M1global'
+
 def add_qc_results(full_df, qc_df_path):
   qc_df = pd.read_csv(qc_df_path, sep='\t')
-  full_df = qc_df.merge(full_df, left_on='Sample', right_on='Isolate', how='right', validate='one_to_one')
-
+  full_df = qc_df.merge(full_df, on='Isolate', how='right', validate='one_to_one')
   full_df = full_df.fillna('-')
-
   return full_df
-
-
 
 def process_ecoli(args):
   full_df = pd.DataFrame()
@@ -169,11 +183,46 @@ def process_nmen(args):
 
   return full_df
 
+def process_spyo(args):
+  full_df = pd.DataFrame()
 
-if args.species == "Ecoli":
-  full_df = process_ecoli(args)
+  for isolate in isolate_list:
+    # Get ST
+    filepath = output_prefix + args.mlst + '/' + isolate + ".tsv"
+    isolate_df = pd.read_csv(filepath, sep='\t')
+
+    # Get emmtyper results
+    filepath_emmtyper = output_prefix + args.emmtyper + '/' + isolate + '.tsv'
+    emmtyper_df = pd.read_csv(filepath_emmtyper, sep='\t', names=['Isolate_raw', 'nr_blast_hits', 'nr_clusters', 'emm_type', 'emm_gene_position', 'possible_emm_types', 'possible_emm_gene_locations', 'emm_cluster'])
+    emmtyper_df['Isolate'] = os.path.splitext(os.path.basename(emmtyper_df['Isolate_raw'][0]))[0]
+    emmtyper_df = emmtyper_df.drop(['Isolate_raw', 'nr_blast_hits', 'nr_clusters', 'possible_emm_types', 'possible_emm_gene_locations'], axis=1)
+
+    isolate_df = isolate_df.merge(emmtyper_df, on='Isolate', how='left')
+
+    ###### M1UK
+    filepath_M1UK = output_prefix + args.M1UK + '/' + isolate + '.tsv'
+    M1UK_df = pd.read_csv(filepath_M1UK, sep='\t')
+    M1UK_df = M1UK_df.drop(['115646_C', '116162_A', '116163_C', '250832_T', '513254_G', '528360_A', '563631_G', '613633_T', '626494_G', '661707_G', '730823_C', '784467_T', '819098_G', '923079_G', '942633_G', '983438_G', '1082253_C', '1238124_G', '1238673_G', '1251193_G', '1373176_C', '1407497_C', '1446116_C', '1535209_A', '1702540_C', '1734749_G', '1828734_G'], axis=1)
+
+    ### Based on emmtyper results and M1UK SNPs, decide non-M1/M1global/M1UK
+    isolate_df = isolate_df.merge(M1UK_df, on='Isolate', how='left')
+
+    isolate_df['M1_type'] = isolate_df.apply(parse_M1UK, axis=1)
+
+    full_df = full_df.append(isolate_df)
+
+  full_df = add_qc_results(full_df, args.qc)
+
+  return full_df
+
+
+if __name__ == "__main__":
+  if args.species == "Ecoli":
+    full_df = process_ecoli(args)
+  elif args.species == "Nmen":
+    full_df = process_nmen(args)
+  elif args.species == "Spyo":
+    full_df = process_spyo(args)
+
   full_df.to_csv(args.output, sep = '\t', index=False)
 
-if args.species == "Nmen":
-  full_df = process_nmen(args)
-  full_df.to_csv(args.output, sep = '\t', index=False)

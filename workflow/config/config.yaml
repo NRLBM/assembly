@@ -20,6 +20,8 @@ pubmlst:
  nmen_mlst_loci: "abcZ,adk,aroE,fumC,gdh,pdhC,pgm"
  nmen_vaccine_antigen_scheme: "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/77/sequence"
  nmen_cgmlst_scheme: "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/47/sequence"
+ spyo_mlst_scheme: "https://rest.pubmlst.org/db/pubmlst_spyogenes_seqdef/schemes/1/sequence"
+ spyo_mlst_loci: "gki,gtr,murI,mutS,recP,xpt,yqiL"
 
 ectyper:
  general: "--sequence"
@@ -30,6 +32,9 @@ abricate:
  VFDB_db: "vfdb"
  minid: 90
  mincov: 70
+
+snippy:
+ general: "--force --cleanup"
 
 # Default timestamp to prevent errors
 timestamp: "1950.01.01_00.00.00"

@@ -12,6 +12,13 @@
     "max_genome_size": 2600000,
     "min_sequencing_depth": 15,
     "max_number_contigs": 500
+  },
+  "Streptococcus pyogenes": {
+    "min_N50": 20000,
+    "min_genome_size": 1600000,
+    "max_genome_size": 2600000,
+    "min_sequencing_depth": 15,
+    "max_number_contigs": 500
   }
 }
 

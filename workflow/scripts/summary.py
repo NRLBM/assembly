@@ -23,7 +23,7 @@ isolate_list = list(args.samples)
 output_prefix = 'tmp_data/' + str(args.timestamp) + '/'
 
 # Print header to STDOUT
-print('Sample', 'Top species', 'Pct top species', 'Number of reads top species', 'ST scheme (PubMLST)', 'ST', 'Number of contigs', 'N50', 'Largest contig', 'Total assembly size', 'Sequencing depth', 'FastQC warnings (pre-trim)', 'FastQC failures (pre-trim)', 'FastQC warnings (post-trim)', 'FastQC failures (post-trim)', sep = ',')
+print('Isolate', 'Top species', 'Pct top species', 'Number of reads top species', 'ST scheme (PubMLST)', 'ST', 'Number of contigs', 'N50', 'Largest contig', 'Total assembly size', 'Sequencing depth', 'FastQC warnings (pre-trim)', 'FastQC failures (pre-trim)', 'FastQC warnings (post-trim)', 'FastQC failures (post-trim)', sep = ',')
 
 def customreadlines(file):
   '''
