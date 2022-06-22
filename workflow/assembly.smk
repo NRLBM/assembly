@@ -5,10 +5,10 @@ configfile: "workflow/config/config.yaml"
 
 # Identify sample names from the R1 read files in the input folder
 # The script check.py should have already checked whether all samples have a single R1 and R2 file associated with it and whether the input folder does not contain other files
-(SAMPLE_NAMES, SAMPLE_NUMBERS) = glob_wildcards("input/{samplename}_{samplenumber}_L001_R1_001.fastq.gz")
+(SAMPLE_NUMBERS, SAMPLE_NAMES) = glob_wildcards("input/{samplenumber}_{samplename}_1_trimmed.fastq.gz")
 
 # Zip and join together all sample names and numbers. This will be used later on to find files to remove 
-SAMPLE_NAMES_NUMBERS = ['_'.join([samplename, samplenumber]) for samplename, samplenumber in zip(SAMPLE_NAMES, SAMPLE_NUMBERS)]
+SAMPLE_NAMES_NUMBERS = ['_'.join([samplenumber, samplename]) for samplenumber, samplename in zip(SAMPLE_NUMBERS, SAMPLE_NAMES)]
 
 # Define the desired output of the pipeline 
 rule all:
@@ -21,21 +21,22 @@ rule all:
 # Remove illumina sample numbers from read file names and copy to scratch
 rule move_to_scratch:
   output:
-    fw = "/scratch/reads/{timestamp}/{samplename}_L001_R1_001.fastq.gz",
-    rv = "/scratch/reads/{timestamp}/{samplename}_L001_R2_001.fastq.gz",
+    fw = "/scratch/reads/{timestamp}/{samplename}_1.fastq.gz",
+    rv = "/scratch/reads/{timestamp}/{samplename}_2.fastq.gz",
   log:
     "slurm/snakemake_logs/{timestamp}/move_to_scratch/{samplename}.log"
   shell:
     """
     mkdir -p /scratch/reads
-    cp input/{wildcards.samplename}_S*_L001_R1_001.fastq.gz {output.fw}
-    cp input/{wildcards.samplename}_S*_L001_R2_001.fastq.gz {output.rv}
+    cp {input
+#CHECK    cp input/{wildcards.samplename}_S*_L001_R1_001.fastq.gz {output.fw}
+#    cp input/{wildcards.samplename}_S*_L001_R2_001.fastq.gz {output.rv}
     """
 
 # Run FastQC before read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R1:
   input:
-    "/scratch/reads/{timestamp}/{sample}_L001_R1_001.fastq.gz"
+    "/scratch/reads/{timestamp}/{sample}_1.fastq.gz"
   output:
     html = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -49,7 +50,7 @@ rule fastqc_pre_R1:
 # Run FastQC before read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R2:
   input:
-    "/scratch/reads/{timestamp}/{sample}_L001_R2_001.fastq.gz"
+    "/scratch/reads/{timestamp}/{sample}_2.fastq.gz"
   output:
     html = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -69,11 +70,11 @@ rule fastqc_pre_R2:
 # MINLEN:36 Remove reads shorter than 36 bp
 rule trimmomatic_pe:
   input:
-    r1 = "/scratch/reads/{timestamp}/{sample}_L001_R1_001.fastq.gz",
-    r2 = "/scratch/reads/{timestamp}/{sample}_L001_R2_001.fastq.gz"
+    r1 = "/scratch/reads/{timestamp}/{sample}_1.fastq.gz",
+    r2 = "/scratch/reads/{timestamp}/{sample}_2.fastq.gz"
   output:
-    r1 = temp("tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz"),
-    r2 = temp("tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz"),
+    r1 = temp("tmp_data/{timestamp}/trimmed/{sample}_1_corrected.fastq.gz"),
+    r2 = temp("tmp_data/{timestamp}/trimmed/{sample}_2_corrected.fastq.gz"),
     r1_unpaired = temp("tmp_data/{timestamp}/trimmed/{sample}.1.unpaired.fastq.gz"),
     r2_unpaired = temp("tmp_data/{timestamp}/trimmed/{sample}.2.unpaired.fastq.gz")
   log:
@@ -92,7 +93,7 @@ rule trimmomatic_pe:
 # Run FastQC after read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_post_R1:
   input:
-    "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
+    "tmp_data/{timestamp}/trimmed/{sample}_1_corrected.fastq.gz",
   output:
     html = temp("tmp_data/{timestamp}/fastqc_post_out/{sample}_R1.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_post_out/{sample}_R1_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -106,7 +107,7 @@ rule fastqc_post_R1:
 # Run FastQC after read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_post_R2:
   input:
-    "tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
+    "tmp_data/{timestamp}/trimmed/{sample}_2_corrected.fastq.gz",
   output:
     html = temp("tmp_data/{timestamp}/fastqc_post_out/{sample}_R2.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_post_out/{sample}_R2_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -123,8 +124,8 @@ rule fastqc_post_R2:
 # subsample reads to estimated 100X depth, use 64 Gb RAM, use SPAdes as assembler and $TMPDIR as tmpdir. 
 rule shovill:
   input:
-    fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
-    rv = "tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
+    fw = "tmp_data/{timestamp}/trimmed/{sample}_1_corrected.fastq.gz",
+    rv = "tmp_data/{timestamp}/trimmed/{sample}_2_corrected.fastq.gz",
   output:
     assembly = "output/{timestamp}/genomes/{sample}.fasta",
     shovill = temp(directory("tmp_data/{timestamp}/shovill_out/{timestamp}_{sample}")),
@@ -150,8 +151,8 @@ rule shovill:
 # Loosely based on http://thegenomefactory.blogspot.com/2018/10/a-unix-one-liner-to-call-bacterial.html 
 rule coverage:
   input:
-    fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
-    rv = "tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz",
+    fw = "tmp_data/{timestamp}/trimmed/{sample}_1_corrected.fastq.gz",
+    rv = "tmp_data/{timestamp}/trimmed/{sample}_2_corrected.fastq.gz",
     assembly = "output/{timestamp}/genomes/{sample}.fasta",
   output:
     temp("tmp_data/{timestamp}/coverage_out/{sample}.txt")
@@ -188,8 +189,8 @@ rule quast:
 # Currently this uses a MiniKraken database, but plan to compose a Reflab-specific database with relevant organisms
 rule kraken2:
   input:
-    fw = "tmp_data/{timestamp}/trimmed/{sample}_L001_R1_001_corrected.fastq.gz",
-    rv = "tmp_data/{timestamp}/trimmed/{sample}_L001_R2_001_corrected.fastq.gz"
+    fw = "tmp_data/{timestamp}/trimmed/{sample}_1_corrected.fastq.gz",
+    rv = "tmp_data/{timestamp}/trimmed/{sample}_2_corrected.fastq.gz"
   output:
     report = temp("tmp_data/{timestamp}/kraken_out/{sample}.txt")
   conda:
@@ -341,8 +342,8 @@ rule summary_to_xlsx:
 rule list_files_for_removal:
   input:
     summary = "output/{timestamp}/summary.xlsx",
-    fw_read_files = expand("input/{sample_name_number}_L001_R1_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
-    rv_read_files = expand("input/{sample_name_number}_L001_R2_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
+#    fw_read_files = expand("input/{sample_name_number}_L001_R1_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
+#CHECK    rv_read_files = expand("input/{sample_name_number}_L001_R2_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
   output:
     "backup/{timestamp}/list_files_to_remove.txt"
   log:

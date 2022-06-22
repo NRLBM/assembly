@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.8, 3.9]
+        python-version: [3.6, 3.8, 3.9, 3.10]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -42,5 +42,35 @@ jobs:
 
         python workflow/scripts/bexsero_coverage.py --input test/bexsero_coverage/unpredictable.json --output test/bexsero_coverage/unpredictable_output.tsv
         cmp test/bexsero_coverage/unpredictable_output.tsv test/bexsero_coverage/correct/unpredictable.tsv
+    - name: test move_to_scratch.py
+      run: |
+        cd $GITHUB_WORKSPACE/assembly
+        mkdir -p test/test_out
 
-        
+        echo "Should work" | tee > logfile.txt
+        python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_1.fastq.gz test/test_out/correct_2.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Should fail with only one input file"
+        ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_1.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Should fail if two rv output files are provided"
+        ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_2.fastq.gz test/test_out/correct_2.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Should fail if output files do not match each other"
+        ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_1.fastq.gz test/test_out/unpaired_2.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Should fail with a missing rv file"
+        ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/unpaired_1.fastq.gz test/test_out/unpaired_2.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Should fail with empty input files (<= 100 bytes)"
+        ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/empty_1.fastq.gz test/test_out/empty_2.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Should fail if multiple files are found to match output files"
+        ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/double_1.fastq.gz test/test_out/double_2.fastq.gz
+        echo "Error code: $?" | tee >> logfile.txt
