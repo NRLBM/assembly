@@ -51,27 +51,27 @@ jobs:
         python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_1.fastq.gz test/test_out/correct_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
-        echo "Should fail with only one input file"
+        echo "Should fail with only one input file" | tee >> logfile.txt
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_1.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
-        echo "Should fail if two rv output files are provided"
+        echo "Should fail if two rv output files are provided" | tee >> logfile.txt
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_2.fastq.gz test/test_out/correct_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
-        echo "Should fail if output files do not match each other"
+        echo "Should fail if output files do not match each other" | tee >> logfile.txt
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/correct_1.fastq.gz test/test_out/unpaired_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
-        echo "Should fail with a missing rv file"
+        echo "Should fail with a missing rv file" | tee >> logfile.txt
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/unpaired_1.fastq.gz test/test_out/unpaired_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
-        echo "Should fail with empty input files (<= 100 bytes)"
+        echo "Should fail with empty input files (<= 100 bytes)" | tee >> logfile.txt
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/empty_1.fastq.gz test/test_out/empty_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
-        echo "Should fail if multiple files are found to match output files"
+        echo "Should fail if multiple files are found to match output files" | tee >> logfile.txt
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/double_1.fastq.gz test/test_out/double_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
 
