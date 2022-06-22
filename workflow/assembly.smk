@@ -25,10 +25,11 @@ rule move_to_scratch:
     rv = "/scratch/reads/{timestamp}/{samplename}_2.fastq.gz",
   log:
     "slurm/snakemake_logs/{timestamp}/move_to_scratch/{samplename}.log"
+  threads: 999
   shell:
     """
-    mkdir -p /scratch/reads
-    python workflow/scripts/move_to_scratch.py -vv --input input --pattern microbesng --output {output.fw} {output.rv} 2&>1>{log}
+    mkdir -p /scratch/reads/{wildcards.timestamp}
+    python workflow/scripts/move_to_scratch.py --input input --pattern microbesng --output {output.fw} {output.rv} -vv 2>&1>{log}
     """
 
 # Run FastQC before read trimming on R1 reads. This uses a Snakemake wrapper
