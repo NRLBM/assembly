@@ -1,4 +1,5 @@
 import sys
+import os
 
 configfile: "workflow/config/config.yaml"
 
@@ -18,24 +19,15 @@ SPYO_SAMPLES = get_samples_from_qc_report('qc_report_spyo.tsv', config["timestam
 all_output = []
 
 if len(ECOLI_SAMPLES) > 0:
-#  all_output.append(expand("tmp_data/{timestamp}/ectyper_Ecoli/{sample}", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/MLST_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/AMRfinder_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/ABRicate_fimH_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/ABRicate_VFDB_Ecoli/{sample}.tsv", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]))
   all_output.append(expand("output/{timestamp}/Ecoli_typing_summary.xlsx", timestamp=config["timestamp"]))
   all_output.append(expand("backup/{timestamp}/Ecoli_typing_summary.tsv", timestamp=config["timestamp"]))
   all_output.append(expand("backup/{timestamp}/Ecoli_typing/{sample}_typing.tar.gz", sample=ECOLI_SAMPLES, timestamp=config["timestamp"]))
 
 if len(NMEN_SAMPLES) > 0:
-#  all_output.append(expand("tmp_data/{timestamp}/MLST_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/gMATS_Nmen/{sample}.json", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/gMATS_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/AMRfinder_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
-#  all_output.append(expand("tmp_data/{timestamp}/ABRicate_VFDB_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
   all_output.append(expand("output/{timestamp}/Nmen_typing_summary.xlsx", timestamp=config["timestamp"]))
   all_output.append(expand("backup/{timestamp}/Nmen_typing_summary.tsv", timestamp=config["timestamp"]))
   all_output.append(expand("backup/{timestamp}/Nmen_typing/{sample}_typing.tar.gz", sample=NMEN_SAMPLES, timestamp=config["timestamp"]))
+  all_output.append(expand("tmp_data/{timestamp}/cluster_lists", timestamp=config["timestamp"]))
 
 if len(SPYO_SAMPLES) > 0:
   all_output.append(expand("output/{timestamp}/Spyo_typing_summary.xlsx", timestamp=config["timestamp"]))
@@ -47,7 +39,7 @@ if len(all_output) == 0:
 
 rule all:
   input:
-    all_output
+    all_output,
 
 # Escherichia coli typing
 rule MLST_ecoli:
@@ -330,6 +322,40 @@ rule ABRicate_VFDB_Nmen:
   shell:
     """
     abricate --db {params.db} --threads {threads} --nopath --minid {params.minid} --mincov {params.mincov} {input.genome} 1>{output.tsv} 2>{log}
+    """
+
+rule mash_nmen:
+  input:
+    genome = "output/{timestamp}/genomes/{sample}.fasta",
+    db = "workflow/db/mash_databases"
+  output:
+    tsv = "tmp_data/{timestamp}/mash_out/{sample}.tsv"
+  conda:
+    "envs/mash.yaml"
+  log:
+    "slurm/snakemake_logs/{timestamp}/mash_Nmen/{sample}.log"
+  threads: 2
+  shell:
+    """
+    mash dist {input.genome} {input.db}/* > {output}
+    """
+
+rule combine_mash_nmen:
+  input:
+    expand("tmp_data/{timestamp}/mash_out/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"])
+  output:
+    directory(expand("tmp_data/{timestamp}/cluster_lists", timestamp=config["timestamp"]))
+  params:
+    threshold = config["mash"]["threshold"],
+    timestamp = config["timestamp"],
+    samples = NMEN_SAMPLES,
+  conda:
+    "envs/combine_mash_Nmen.yaml"
+  log:
+    expand("slurm/snakemake_logs/{timestamp}/combine_mash_Nmen.log", timestamp=config["timestamp"])
+  shell:
+    """
+    python workflow/scripts/combine_mash.py --threshold {params.threshold} --timestamp {params.timestamp} --out {output} {params.samples}
     """
 
 # Find all files to backup and create a tarball with a timestamp

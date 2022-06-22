@@ -28,6 +28,12 @@ snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-con
 # Snakemake command to create report in backup folder
 snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_typing_${TIMESTAMP}.html"
 
+# Clustering snakemake command
+snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_clustering_${TIMESTAMP}.json" --notemp
+
+# Snakemake command to create report in backup folder
+snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_clustering_${TIMESTAMP}.html"
+
 # Remove all files listed in list_files_to_remove.txt
 while read file
 do

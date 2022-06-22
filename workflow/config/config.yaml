@@ -36,5 +36,14 @@ abricate:
 snippy:
  general: "--force --cleanup"
 
+mash:
+ threshold: 0.005
+
+ska:
+ proportion: 0.1
+
+convert_snps_to_network:
+ threshold: 25
+
 # Default timestamp to prevent errors
 timestamp: "1950.01.01_00.00.00"
