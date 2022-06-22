@@ -18,7 +18,7 @@ import subprocess
 import logging
 
 # Script uses f-strings, check whether Python>=3.6
-assert sys.version_info >= (3, 6), "This script requires at least Python version 3.6"
+assert sys.version_info >= (3, 7), "This script requires at least Python version 3.7"
 
 if not args.verbose:
   # No increased verbosity
