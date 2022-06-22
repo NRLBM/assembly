@@ -17,7 +17,7 @@ def list_read_files():
     List of R1 and R2 files identified through find
   
   '''
-  completed_find = subprocess.run(['find input/ -size +0 -type f -regextype sed -regex "input/[0-9]{6}*_[12]_trimmed.fastq.gz" -exec basename {} \;'], capture_output=True, shell=True)
+  completed_find = subprocess.run(['find input/ -size +100c -type f -regextype egrep -regex "input/[0-9]{6}_[0-9a-zA-Z]+_[12]_trimmed.fastq.gz" -exec basename {} \;'], capture_output=True, shell=True)
   list_files = completed_find.stdout.decode("utf-8").rstrip('\n').split('\n')
   return list_files
 
