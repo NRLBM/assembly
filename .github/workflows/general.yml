@@ -74,3 +74,6 @@ jobs:
         echo "Should fail if multiple files are found to match output files"
         ! python workflow/scripts/move_to_scratch.py --input test/move_to_scratch --pattern microbesng --output test/test_out/double_1.fastq.gz test/test_out/double_2.fastq.gz
         echo "Error code: $?" | tee >> logfile.txt
+
+        echo "Contents logfile:"
+        cat logfile.txt
