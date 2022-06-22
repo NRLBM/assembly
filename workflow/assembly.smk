@@ -28,9 +28,7 @@ rule move_to_scratch:
   shell:
     """
     mkdir -p /scratch/reads
-    cp {input
-#CHECK    cp input/{wildcards.samplename}_S*_L001_R1_001.fastq.gz {output.fw}
-#    cp input/{wildcards.samplename}_S*_L001_R2_001.fastq.gz {output.rv}
+    python workflow/scripts/move_to_scratch.py -vv --input input --pattern microbesng --output {output.fw} {output.rv} 2&>1>{log}
     """
 
 # Run FastQC before read trimming on R1 reads. This uses a Snakemake wrapper
@@ -342,8 +340,8 @@ rule summary_to_xlsx:
 rule list_files_for_removal:
   input:
     summary = "output/{timestamp}/summary.xlsx",
-#    fw_read_files = expand("input/{sample_name_number}_L001_R1_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
-#CHECK    rv_read_files = expand("input/{sample_name_number}_L001_R2_001.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
+    fw_read_files = expand("input/{sample_name_number}_1_trimmed.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
+    rv_read_files = expand("input/{sample_name_number}_2_trimmed.fastq.gz", sample_name_number=SAMPLE_NAMES_NUMBERS),
   output:
     "backup/{timestamp}/list_files_to_remove.txt"
   log:

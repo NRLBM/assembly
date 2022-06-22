@@ -17,7 +17,7 @@ def list_read_files():
     List of R1 and R2 files identified through find
   
   '''
-  completed_find = subprocess.run(['find input/ -size +0 -type f -regextype sed -regex ".*/*_L001_R[12]_001.fastq.gz" -exec basename {} \;'], capture_output=True, shell=True)
+  completed_find = subprocess.run(['find input/ -size +0 -type f -regextype sed -regex "input/[0-9]{6}*_[12]_trimmed.fastq.gz" -exec basename {} \;'], capture_output=True, shell=True)
   list_files = completed_find.stdout.decode("utf-8").rstrip('\n').split('\n')
   return list_files
 
@@ -46,7 +46,7 @@ def check_two_files(list_files):
   count_dict = {}
 
   for file_name in list_files:
-    sample_name = re.sub('_L001_R[12]_001.fastq.gz', '', file_name)
+    sample_name = re.sub('_[12]_trimmed.fastq.gz', '', file_name)
     if (sample_name in count_dict):
       count_dict[sample_name] += 1
     else:
@@ -85,8 +85,8 @@ def check_R1_R2_per_sample(list_files, count_dict):
   count_dict_copy = count_dict.copy()
 
   for key, value in count_dict.items():
-    R1_string = ''.join([key, '_L001_R1_001.fastq.gz'])
-    R2_string = ''.join([key, '_L001_R2_001.fastq.gz'])
+    R1_string = ''.join([key, '_1_trimmed.fastq.gz'])
+    R2_string = ''.join([key, '_2_trimmed.fastq.gz'])
     if R1_string in list_files:
       count_dict_copy[key] -= 1
     if R2_string in list_files:
