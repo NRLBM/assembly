@@ -28,22 +28,31 @@ snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-con
 # Snakemake command to create report in backup folder
 snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_typing_${TIMESTAMP}.html"
 
-# Clustering snakemake command
-snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_clustering_${TIMESTAMP}.json" --notemp
+NR_LINES_NMEN_QC_REPORT=$(wc -l "backup/${TIMESTAMP}/qc_report_nmen.tsv" | awk '{print $1}')
 
-# Snakemake command to create report in backup folder
-snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_clustering_${TIMESTAMP}.html"
+if [[ "$NR_LINES_NMEN_QC_REPORT" -gt 1 ]]
+then
+  # Clustering snakemake command
+  snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_clustering_${TIMESTAMP}.json" --notemp
+
+  # Snakemake command to create report in backup folder
+  snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_clustering_${TIMESTAMP}.html"
+
+  # Run script to prepare PubMLST upload folder
+  mkdir -p "output/${TIMESTAMP}/pubmlst_upload"
+  python workflow/scripts/prepare_pubmlst.py -m metadata_pubmlst/metadata_pubmlst.csv --qc "backup/${TIMESTAMP}/qc_report_nmen.tsv" -o "output/${TIMESTAMP}/pubmlst_upload" --input "output/${TIMESTAMP}/genomes" 2>"output/${TIMESTAMP}/pubmlst_upload/logfile.txt"
+fi
 
 ## Remove all files listed in list_files_to_remove.txt
-#while read file
-#do
-#  echo "Removing $file"
-#  rm "$file"
-#done < "backup/${TIMESTAMP}/list_files_to_remove.txt"
+while read file
+do
+  echo "Removing $file"
+  rm "$file"
+done < "backup/${TIMESTAMP}/list_files_to_remove.txt"
 
 # Remove tmp_data folder with specific timestamp
-#echo "Removing tmp_data/${TIMESTAMP}"
-#rm -r "tmp_data/${TIMESTAMP}"
+echo "Removing tmp_data/${TIMESTAMP}"
+rm -r "tmp_data/${TIMESTAMP}"
 
 # Mail to mail address stored in .email_user that job finished witout issues and that results are found in output folder
-#echo "Het Lisa script ingediend op $TIMESTAMP is zonder foutmeldingen voltooid. De resultaten zijn te vinden in de \"output/${TIMESTAMP}\" map op Lisa." | mail -s "Lisa script ingediend op $TIMESTAMP is klaar" "$(cat .email_user),$(cat .email_bioinformatician)"
+echo "Het Lisa script ingediend op $TIMESTAMP is zonder foutmeldingen voltooid. De resultaten zijn te vinden in de \"output/${TIMESTAMP}\" map op Lisa." | mail -s "Lisa script ingediend op $TIMESTAMP is klaar" "$(cat .email_user),$(cat .email_bioinformatician)"

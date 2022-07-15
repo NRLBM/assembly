@@ -95,11 +95,11 @@ for isolate in isolate_list:
   FAIL_PRE = list()
 
   # Do this for R1 and R2
-  for read in ['R1', 'R2']:
+  for read in ['1', '2']:
     # Open temporary connection to zipfile
-    with zipfile.ZipFile(output_prefix + args.fastqc_pre + '/' + isolate + '_' + read + '_fastqc.zip') as myzip:
+    with zipfile.ZipFile(output_prefix + args.fastqc_pre + '/' + isolate + '_R' + read + '_fastqc.zip') as myzip:
       # Open unzipped summary file
-      with myzip.open(isolate + '_L001_' + read + '_001_fastqc/summary.txt') as myfile:
+      with myzip.open(isolate + '_' + read + '_fastqc/summary.txt') as myfile:
         # Read whole summary at once
         lines = myfile.readlines()
 
@@ -128,9 +128,9 @@ for isolate in isolate_list:
   WARN_POST = list()
   FAIL_POST = list()
 
-  for read in ['R1', 'R2']:
-    with zipfile.ZipFile(output_prefix + args.fastqc_post + '/' + isolate + '_' + read + '_fastqc.zip') as myzip:
-      with myzip.open(isolate + '_L001_' + read + '_001_corrected_fastqc/summary.txt') as myfile:
+  for read in ['1', '2']:
+    with zipfile.ZipFile(output_prefix + args.fastqc_post + '/' + isolate + '_R' + read + '_fastqc.zip') as myzip:
+      with myzip.open(isolate + '_' + read + '_corrected_fastqc/summary.txt') as myfile:
         lines = myfile.readlines()
 
     for line_bytes in lines:

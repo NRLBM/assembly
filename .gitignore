@@ -7,8 +7,7 @@ input/*
 snakemake.job
 slurm*
 .email*
-.microreact_api_key
 bin/analyse_runs
 workflow/scripts/utils/__pycache__
 workflow/db/mash_databases/*
-all_paired.fa
+metadata_pubmlst
