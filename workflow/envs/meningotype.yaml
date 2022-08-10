@@ -1,0 +1,7 @@
+channels:
+- bioconda
+- conda-forge
+dependencies:
+- meningotype=0.8.5
+- blast=2.12
+- biopython=1.79

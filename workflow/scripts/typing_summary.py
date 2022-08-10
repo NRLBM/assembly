@@ -11,6 +11,7 @@ parser.add_argument('--species', dest='species', help="Species to summarise", ch
 parser.add_argument('--qc', dest='qc', help="Path to QC report", type=str, required=True)
 parser.add_argument('--mlst', dest="mlst", help="mlst output directory", type=str)
 parser.add_argument('--gmats', dest="gmats", help="gMATS output directory", type=str, default="gMATS_Nmen")
+parser.add_argument('--meningotype', dest="meningotype", help="meningotype output directory", type=str, default="meningotype_Nmen")
 parser.add_argument('--amrfinder', dest="amrfinder", help="AMRfinder output directory", type=str)
 parser.add_argument('--ectyper', dest="ectyper", help="ECtyper output directory", type=str, default="ectyper_Ecoli")
 parser.add_argument('--fimtyper', dest="fimtyper", help="ABRicate Fimtyper output directory", type=str, default="ABRicate_fimH_Ecoli")
@@ -35,6 +36,7 @@ elif (args.species == "Neisseria meningitidis") or (args.species == "Nmen"):
   assert args.amrfinder is not None
   assert args.vfdb is not None
   assert args.gmats is not None
+  assert args.meningotype is not None
 elif (args.species == "Streptococcus pyogenes") or (args.species == "Spyo"):
   args.species = "Spyo"
   assert args.mlst is not None
@@ -164,6 +166,13 @@ def process_nmen(args):
     gmats_df = gmats_df.drop(['Isolate'], axis=1)
 
     isolate_df = pd.concat([isolate_df, gmats_df], axis=1)
+
+    ### meningotype
+    filepath = output_prefix + args.meningotype + '/' + isolate + ".tsv"
+    meningotype_df = pd.read_csv(filepath, sep='\t')
+    isolate_df['Serogroup'] = meningotype_df.at[0,'SEROGROUP']
+    isolate_df['porA'] = meningotype_df.at[0,'PorA']
+    isolate_df['fetA'] = meningotype_df.at[0,'FetA']
 
     # Get AMR genes and put lines in a list to reuse
     lines = customreadlines(output_prefix + args.amrfinder + '/' + isolate + ".tsv")

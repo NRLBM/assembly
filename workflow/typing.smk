@@ -318,7 +318,7 @@ rule ABRicate_VFDB_Nmen:
     mincov = config["abricate"]["mincov"]
   threads: 1
   log:
-    "slurm/snakemake_logs/{timestamp}/ABRicate_VFDB_Ecoli/{sample}.log"
+    "slurm/snakemake_logs/{timestamp}/ABRicate_VFDB_Nmen/{sample}.log"
   shell:
     """
     abricate --db {params.db} --threads {threads} --nopath --minid {params.minid} --mincov {params.mincov} {input.genome} 1>{output.tsv} 2>{log}
@@ -358,6 +358,22 @@ rule combine_mash_nmen:
     python workflow/scripts/combine_mash.py --threshold {params.threshold} --timestamp {params.timestamp} --out {output} {params.samples}
     """
 
+rule meningotype_Nmen:
+  input:
+    genome = "output/{timestamp}/genomes/{sample}.fasta"
+  output:
+    tsv = "tmp_data/{timestamp}/meningotype_Nmen/{sample}.tsv"
+  conda:
+    "envs/meningotype.yaml"
+  threads: 1
+  log:
+    "slurm/snakemake_logs/{timestamp}/meningotype_Nmen/{sample}.log"
+  threads: 999
+  shell:
+    """
+    meningotype --finetype {input.genome} 1>{output.tsv} 2>{log}
+    """
+
 # Find all files to backup and create a tarball with a timestamp
 rule backup_data_nmen:
   input:
@@ -367,6 +383,7 @@ rule backup_data_nmen:
     MLST_json = "tmp_data/{timestamp}/MLST_Nmen/{sample}.json",
     AMRfinder = "tmp_data/{timestamp}/AMRfinder_Nmen/{sample}.tsv",
     ABRicate_VFDB = "tmp_data/{timestamp}/ABRicate_VFDB_Nmen/{sample}.tsv",
+    meningotype = "tmp_data/{timestamp}/meningotype_Nmen/{sample}.tsv",
   output:
     "backup/{timestamp}/Nmen_typing/{sample}_typing.tar.gz"
   params:
@@ -379,12 +396,14 @@ rule backup_data_nmen:
     mkdir -p tmp_data/.backup/{params.sample}/AMRfinder
     mkdir -p tmp_data/.backup/{params.sample}/gMATS
     mkdir -p tmp_data/.backup/{params.sample}/ABRicate_VFDB
+    mkdir -p tmp_data/.backup/{params.sample}/meningotype
     cp {input.gMATS_tsv} tmp_data/.backup/{params.sample}/gMATS
     cp {input.gMATS_json} tmp_data/.backup/{params.sample}/gMATS
     cp {input.MLST_tsv} tmp_data/.backup/{params.sample}/MLST_PubMLST
     cp {input.MLST_json} tmp_data/.backup/{params.sample}/MLST_PubMLST
     cp {input.AMRfinder} tmp_data/.backup/{params.sample}/AMRfinder
     cp {input.ABRicate_VFDB} tmp_data/.backup/{params.sample}/ABRicate_VFDB
+    cp {input.meningotype} tmp_data/.backup/{params.sample}/meningotype
     tar zcvf {output} -C tmp_data/.backup {params.sample}
     rm -rf tmp_data/.backup
     """
@@ -395,6 +414,7 @@ rule typing_summary_csv_Nmen:
     expand("tmp_data/{timestamp}/MLST_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/AMRfinder_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
     expand("tmp_data/{timestamp}/ABRicate_VFDB_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
+    expand("tmp_data/{timestamp}/meningotype_Nmen/{sample}.tsv", sample=NMEN_SAMPLES, timestamp=config["timestamp"]),
     qc_report = expand("backup/{timestamp}/qc_report_nmen.tsv", timestamp=config["timestamp"]),
   output:
     "backup/{timestamp}/Nmen_typing_summary.tsv"
@@ -408,7 +428,7 @@ rule typing_summary_csv_Nmen:
     "slurm/snakemake_logs/{timestamp}/Nmen_typing_summary.log"
   shell:
     """
-    python workflow/scripts/typing_summary.py --species Nmen --timestamp {params.timestamp} --qc {input.qc_report} --output {output} --mlst MLST_Nmen --amrfinder AMRfinder_Nmen --vfdb ABRicate_VFDB_Nmen {params.samples} 2>&1>{log}
+    python workflow/scripts/typing_summary.py --species Nmen --timestamp {params.timestamp} --qc {input.qc_report} --output {output} --mlst MLST_Nmen --amrfinder AMRfinder_Nmen --vfdb ABRicate_VFDB_Nmen --meningotype meningotype_Nmen {params.samples} 2>&1>{log}
     """
 
 # Convert the summary file (tsv format) to an Excel file and save this version in the output folder

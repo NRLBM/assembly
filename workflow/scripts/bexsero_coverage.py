@@ -164,7 +164,7 @@ if 'exact_match' in list_decisions_BAST:
   decision_BAST = 'exact_match'
 elif 'cross-reactive' in list_decisions_BAST:
   decision_BAST = 'cross-reactive'
-elif all([antigen_decision == 'none' for antigen_decision in list_decisions_BAST]):
+elif all([any([antigen_decision == 'none', antigen_decision == 'missing/novel allele']) for antigen_decision in list_decisions_BAST]):
   decision_BAST = 'none'
 else:
   decision_BAST = 'insufficient data'
