@@ -37,7 +37,7 @@ snippy:
  general: "--force --cleanup"
 
 mash:
- threshold: 0.005
+ threshold: 0.011
 
 ska:
  proportion: 0.1
