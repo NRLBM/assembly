@@ -43,7 +43,7 @@ then
   python workflow/scripts/prepare_pubmlst.py -m metadata_pubmlst/metadata_pubmlst.csv --qc "backup/${TIMESTAMP}/qc_report_nmen.tsv" -o "output/${TIMESTAMP}/pubmlst_upload" --input "output/${TIMESTAMP}/genomes" 2>"output/${TIMESTAMP}/pubmlst_upload/logfile.txt"
 fi
 
-## Remove all files listed in list_files_to_remove.txt
+# Remove all files listed in list_files_to_remove.txt
 while read file
 do
   echo "Removing $file"

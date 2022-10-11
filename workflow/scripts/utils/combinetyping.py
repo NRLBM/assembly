@@ -9,6 +9,8 @@ def combinetyping(args):
     args.species = "Ecoli"
   elif args.species == "Neisseria meningtidis":
     args.species == "Nmen"
+  elif args.species == "Streptococcus pyogenes":
+    args.species == "Spyo"
   list_all_summaries = glob_all_typing_summaries(args.inputdir, args.species)
   df = read_typing_summaries(list_all_summaries)
   year_series = df['Isolate'].apply(parse_year)

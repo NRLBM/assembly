@@ -78,7 +78,7 @@ def combinetyping_subparser(subparsers):
   input_args.add_argument("-i", "--input-dir", dest="inputdir", help="Location of assembly working directory and glob all summaries", metavar="HEAD DIR", default='~/assembly', type=str)
 
   setting_args = group.add_argument_group('Settings')
-  setting_args.add_argument("-s", "--species", dest='species', help='Species to plot', metavar="SPECIES", choices=['Ecoli', 'Nmen'], required=True)
+  setting_args.add_argument("-s", "--species", dest='species', help='Species to plot', metavar="SPECIES", choices=['Ecoli', 'Nmen', 'Spyo'], required=True)
 
   output_args = group.add_argument_group('Output')
   setting_args.add_argument("-o", "--output", dest='output', help='Output table file', metavar="OUTPUT", required=True)

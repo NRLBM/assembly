@@ -17,7 +17,7 @@ def list_read_files():
     List of R1 and R2 files identified through find
   
   '''
-  completed_find = subprocess.run(['find input/ -size +100c -type f -regextype egrep -regex "input/[0-9]{6}_[0-9a-zA-Z]+_[12]_trimmed.fastq.gz" -exec basename {} \;'], capture_output=True, shell=True)
+  completed_find = subprocess.run(['find input/ -size +100c -type f -regextype egrep -regex "input/[0-9]{6}_[0-9]+([a-zA-Z]+)?(_I{1,3})?(_[a-zA-Z]*)?_[12]_trimmed\.fastq\.gz" -exec basename {} \;'], capture_output=True, shell=True)
   list_files = completed_find.stdout.decode("utf-8").rstrip('\n').split('\n')
   return list_files
 
@@ -121,8 +121,11 @@ def check_other_input_files(list_files):
   all_files_inputdir = os.listdir('input/')
   for file in all_files_inputdir:
     if file not in list_files:
-      errstring = ''.join([file, ' is present in input dir and does not seem to be a non-empty sequencing read file. Exiting now.'])
-      raise ValueError(errstring)
+      if (file[-20:] == '_U1_trimmed.fastq.gz') or (file[-20:] == '_U2_trimmed.fastq.gz'):
+        os.remove(''.join(['input/', file]))
+      else:
+        errstring = ''.join([file, ' is present in input dir and does not seem to be a non-empty sequencing read file. Exiting now.'])
+        raise ValueError(errstring)
 
 def calculate_pipeline_time(count_dict):
   '''
