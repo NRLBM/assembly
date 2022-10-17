@@ -44,7 +44,7 @@ rule fastqc_pre_R1:
     "slurm/snakemake_logs/{timestamp}/fastqc_pre/{sample}_R1.log"
   threads: 2
   wrapper:
-    "0.78.0/bio/fastqc"
+    config["wrapper"]["fastqc"]
 
 # Run FastQC before read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R2:
@@ -58,7 +58,7 @@ rule fastqc_pre_R2:
     "slurm/snakemake_logs/{timestamp}/fastqc_pre/{sample}_R2.log"
   threads: 2
   wrapper:
-    "0.78.0/bio/fastqc"
+    config["wrapper"]["fastqc"]
 
 # Trim and filter reads using Trimmomatic, executed as a Snakemake wrapper
 # See http://www.usadellab.org/cms/?page=trimmomatic for explanation of the Trimmomatic settings
@@ -87,7 +87,7 @@ rule trimmomatic_pe:
   threads:
     16
   wrapper:
-    "0.78.0/bio/trimmomatic/pe"
+    config["wrapper"]["trimmomatic_pe"]
 
 # Run FastQC after read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_post_R1:
@@ -101,7 +101,7 @@ rule fastqc_post_R1:
     "slurm/snakemake_logs/{timestamp}/fastqc_post/{sample}_R1.log"
   threads: 2
   wrapper:
-    "0.78.0/bio/fastqc"
+    config["wrapper"]["fastqc"]
 
 # Run FastQC after read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_post_R2:
@@ -115,7 +115,7 @@ rule fastqc_post_R2:
     "slurm/snakemake_logs/{timestamp}/fastqc_post/{sample}_R2.log"
   threads: 2
   wrapper:
-    "0.78.0/bio/fastqc"
+    config["wrapper"]["fastqc"]
 
 # Assemble trimmed data into a draft genome. Only the genome is retained currently.
 # The bash script estimates genome size using mash. Shovill tries this as well using kmc but this fails too often in our setup.
@@ -231,7 +231,7 @@ rule multiqc_fastqc:
   log:
     "slurm/snakemake_logs/{timestamp}/multiqc_fastqc.log"
   wrapper:
-    "0.78.0/bio/multiqc"
+    config["wrapper"]["multiqc"]
 
 # Combine Quast and Kraken reports into a single multiqc report
 rule multiqc_kraken:
@@ -243,7 +243,7 @@ rule multiqc_kraken:
   log:
     "slurm/snakemake_logs/{timestamp}/multiqc_kraken_quast.log"
   wrapper:
-    "0.78.0/bio/multiqc"
+    config["wrapper"]["multiqc"]
 
 # Copy multiqc reports to the output folder
 rule copy_qc_reports:
@@ -324,7 +324,8 @@ rule summary:
 # Convert the summary file (csv format) to an Excel file and save this version in the output folder
 rule summary_to_xlsx:
   input:
-    "backup/{timestamp}/summary.csv"
+    data = "backup/{timestamp}/summary.csv",
+    versions = "backup/{timestamp}/version_report_assembly.csv"
   output:
     "output/{timestamp}/summary.xlsx"
   conda:
@@ -334,7 +335,7 @@ rule summary_to_xlsx:
   threads: 1
   shell:
     """
-    python workflow/scripts/summary_to_xlsx.py {input} {output} 2>&1>{log}
+    python workflow/scripts/summary_to_xlsx.py {input.data} {input.versions} {output} 2>&1>{log}
     """
 
 # List files based on SAMPLE_NAMES_NUMBERS that should be removed
@@ -354,3 +355,11 @@ rule list_files_for_removal:
       echo "$file"
     done > {output}
     """
+
+include: "version_rules/shovill.smk"
+include: "version_rules/coverage.smk"
+include: "version_rules/quast.smk"
+include: "version_rules/mlst.smk"
+include: "version_rules/kraken.smk"
+include: "version_rules/assembly_general.smk"
+include: "version_rules/version_report_assembly.smk"

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#echo "The script is being updated, this will be done momentarily..."
+#exit
+
 # This script checks some prerequisites before the actual pipeline commences
 # The script should be in the bin folder and this folder should be added to PATH if the pipeline has to be started according to the manual.
 

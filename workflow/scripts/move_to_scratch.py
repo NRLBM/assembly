@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__version__ = "0.0.1"
+__author__ = "Boas van der Putten"
+
 import argparse
 
 parser = argparse.ArgumentParser(description='Find and copy input file to output file, based on expected pattern.')
@@ -7,6 +10,7 @@ parser = argparse.ArgumentParser(description='Find and copy input file to output
 parser.add_argument('--input', dest='input', required=True, type=str, help='Input directory')
 parser.add_argument('--output', dest='output', required=True, type=str, nargs='+', help='Output files')
 parser.add_argument('--pattern', dest='pattern', type=str, default='microbesng', choices=['microbesng'], help='Expected pattern of input file. Default: MicrobesNG. More patterns will be added in the future.')
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="Increase verbosity (nothing for WARNING, -v for INFO, -vv for DEBUG)")
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import pandas as pd
 
 
@@ -31,6 +34,7 @@ if __name__ == "__main__":
   parser.add_argument("-i", "--input", dest="input", help="Input table (tsv format)", metavar="INPUT FILE", required=True, type=str)
   parser.add_argument("-o", "--output", dest="output", help="Output table (csv format)", metavar="OUTPUT FILE", required=True, type=str)
   parser.add_argument('samples', nargs='+', help="List of sample names of the current new batch", type=str)
+  parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
   args = parser.parse_args()
   

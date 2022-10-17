@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import argparse
 import pandas as pd
 import os
@@ -20,6 +23,7 @@ parser.add_argument('--emmtyper', dest="emmtyper", help="emmtyper output directo
 parser.add_argument('--M1UK', dest="M1UK", help="M1UK mapping output directory", type=str, default="M1UK_Spyo")
 parser.add_argument('--timestamp', dest="timestamp", help="Timestamp of analysis", type=str, required=True)
 parser.add_argument('--output', dest='output', help="Output file", type=str, required=True)
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 

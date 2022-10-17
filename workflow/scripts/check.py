@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
+__version__ = "0.0.1"
+__author__ = "Boas van der Putten"
+
 # Load libraries
 import os
 import re
 import subprocess
+import argparse
 
 def list_read_files():
   '''
@@ -159,4 +163,8 @@ def main():
   print(nr_minutes)
 
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Predict vaccine coverage based on gMATS method')
+  parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
+  args = parser.parse_args()
+
   main()

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import argparse
 import json
 import os
@@ -10,6 +13,7 @@ parser = argparse.ArgumentParser(description='Convert PubMLST typing (traditiona
 parser.add_argument('--input', dest='input', required=True, type=str, help='Input JSON file with MLST allele calls from PubMLST API')
 parser.add_argument('--output', dest='output', required=True, type=str, help='Output TSV file')
 parser.add_argument('--loci', dest='loci', required=True, type=str, help='MLST scheme loci to use')
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 def get_sample_name(lines):
   for line in lines:
     if line.split('\t')[0] == '#CHROM':
@@ -95,6 +98,8 @@ if __name__ == '__main__':
   parser.add_argument('--extended', help="Print SNP identities", dest='extended', action='store_true')
   parser.add_argument('--header', help="Print header", dest='header', action='store_true')
   parser.add_argument('-o', '--output', help="Output file", dest='output', default=sys.stderr)
+  parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
+
   args = parser.parse_args()
 
   main(args)
