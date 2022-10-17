@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__version__ = "0.0.1"
+__author__ = "Boas van der Putten"
+
 import json
 import pandas as pd
 import argparse
@@ -9,6 +12,7 @@ parser = argparse.ArgumentParser(description='Predict vaccine coverage based on 
 
 parser.add_argument('--input', dest='input', required=True, type=str, help='Input JSON file from PubMLST typing')
 parser.add_argument('--output', dest='output', required=True, type=str, help='TSV output file')
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 

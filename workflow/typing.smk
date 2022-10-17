@@ -41,6 +41,19 @@ rule all:
   input:
     all_output,
 
+rule AMRfinder_db_update:
+  output:
+    temp("tmp_data/{timestamp}/amrfinder_db_updated.txt"),
+  conda:
+    "envs/amrfinder.yaml"
+  log:
+    "slurm/snakemake_logs/{timestamp}/AMRfinder_db_update.log"
+  shell:
+    """
+    amrfinder -u
+    echo "downloaded successfully" > {output}
+    """
+
 # Escherichia coli typing
 rule MLST_ecoli:
   input:
@@ -78,6 +91,7 @@ rule convert_MLST_ecoli:
 
 rule AMRFinder_ecoli:
   input:
+    dummy = "tmp_data/{timestamp}/amrfinder_db_updated.txt",
     genome = "output/{timestamp}/genomes/{sample}.fasta"
   output: 
     temp("tmp_data/{timestamp}/AMRfinder_Ecoli/{sample}.tsv")
@@ -90,8 +104,7 @@ rule AMRFinder_ecoli:
     "slurm/snakemake_logs/{timestamp}/AMRfinder_Ecoli/{sample}.log"
   shell:
     """
-    amrfinder -u
-    amrfinder --threads 4 --nucleotide {input} --organism {params.organism} --output {output} 2>&1>{log}    
+    amrfinder --threads 4 --nucleotide {input.genome} --organism {params.organism} --output {output} 2>&1>{log}    
     """
 
 rule ECtyper_ecoli:
@@ -207,7 +220,8 @@ rule typing_summary_csv_Ecoli:
 # Convert the summary file (tsv format) to an Excel file and save this version in the output folder
 rule typing_summary_to_xlsx_Ecoli:
   input:
-    "backup/{timestamp}/Ecoli_typing_summary.tsv"
+    data = "backup/{timestamp}/Ecoli_typing_summary.tsv",
+    versions = "backup/{timestamp}/version_report_typing.csv"
   output:
     "output/{timestamp}/Ecoli_typing_summary.xlsx"
   conda:
@@ -217,7 +231,7 @@ rule typing_summary_to_xlsx_Ecoli:
   threads: 16
   shell:
     """
-    python workflow/scripts/summary_to_xlsx.py -d '\t' {input} {output} 2>&1>{log}
+    python workflow/scripts/summary_to_xlsx.py {input.data} {input.versions} {output} -d '\t' 2>&1>{log}
     """
 
 # Neisseria meningitidis typing
@@ -257,6 +271,7 @@ rule convert_MLST_nmen:
 
 rule AMRFinder_nmen:
   input:
+    dummy = "tmp_data/{timestamp}/amrfinder_db_updated.txt",
     genome = "output/{timestamp}/genomes/{sample}.fasta"
   output:
     temp("tmp_data/{timestamp}/AMRfinder_Nmen/{sample}.tsv")
@@ -269,8 +284,7 @@ rule AMRFinder_nmen:
     "slurm/snakemake_logs/{timestamp}/AMRfinder_Nmen/{sample}.log"
   shell:
     """
-    amrfinder -u
-    amrfinder --threads {threads} --nucleotide {input} --organism {params.organism} --output {output} 2>&1>{log}
+    amrfinder --threads {threads} --nucleotide {input.genome} --organism {params.organism} --output {output} 2>&1>{log}
     """
 
 rule gMATS_nmen:
@@ -434,7 +448,8 @@ rule typing_summary_csv_Nmen:
 # Convert the summary file (tsv format) to an Excel file and save this version in the output folder
 rule typing_summary_to_xlsx_Nmen:
   input:
-    "backup/{timestamp}/Nmen_typing_summary.tsv"
+    data = "backup/{timestamp}/Nmen_typing_summary.tsv",
+    versions = "backup/{timestamp}/version_report_typing.csv"
   output:
     "output/{timestamp}/Nmen_typing_summary.xlsx"
   conda:
@@ -444,7 +459,7 @@ rule typing_summary_to_xlsx_Nmen:
   threads: 16
   shell:
     """
-    python workflow/scripts/summary_to_xlsx.py -d '\t' {input} {output} 2>&1>{log}
+    python workflow/scripts/summary_to_xlsx.py {input.data} {input.versions} {output} -d '\t' 2>&1>{log}
     """
 
 # Streptococcus pyogenes typing
@@ -482,11 +497,30 @@ rule convert_MLST_spyo:
     python workflow/scripts/convert_MLST.py --input {input} --output {output} --loci {params.loci}
     """
 
+rule download_emmtyper_db:
+  output:
+    temp("tmp_data/{timestamp}/emmtyper_db_updated.txt")
+  params:
+    cdc_download_path = config["emmtyper"]["cdc_download_path"],
+    db = config["emmtyper"]["db"]
+  conda:
+    "envs/emmtyper.yaml"
+  log:
+    "slurm/snakemake_logs/{timestamp}/download_emmtyper_db.log"
+  shell:
+    """
+    bash workflow/scripts/download_emmtyper_db.sh {params.db} {params.cdc_download_path}
+    echo "downloaded successfully" > {output}
+    """
+
 rule emmtyper_spyo:
   input:
+    dummy = "tmp_data/{timestamp}/emmtyper_db_updated.txt",
     genome = "output/{timestamp}/genomes/{sample}.fasta"
   output:
     tsv = temp("tmp_data/{timestamp}/emmtyper_Spyo/{sample}.tsv")
+  params:
+    db = config["emmtyper"]["db"]
   threads: 8
   conda:
     "envs/emmtyper.yaml"
@@ -494,7 +528,7 @@ rule emmtyper_spyo:
     "slurm/snakemake_logs/{timestamp}/emmtyper_Spyo/{sample}.log"
   shell:
     """
-    emmtyper --output-format verbose {input.genome} > {output.tsv}
+    emmtyper --output-format verbose --blast_db {params.db} {input.genome} > {output.tsv}
     """
 
 rule gunzip_ref:
@@ -519,7 +553,8 @@ rule snippy_M1UK_Spyo:
   params:
     general = config["snippy"]["general"]
   threads: 16
-  conda: "envs/snippy.yaml"
+  conda:
+    "envs/snippy.yaml"
   shell:
     """
     snippy {params.general} --cpus {threads} --outdir {output} --ref {input.ref} --contigs {input.genome} 2>&1>{log}
@@ -593,7 +628,8 @@ rule typing_summary_csv_Spyo:
 # Convert the summary file (tsv format) to an Excel file and save this version in the output folder
 rule typing_summary_to_xlsx_Spyo:
   input:
-    "backup/{timestamp}/Spyo_typing_summary.tsv"
+    data = "backup/{timestamp}/Spyo_typing_summary.tsv",
+    versions = "backup/{timestamp}/version_report_typing.csv"
   output:
     "output/{timestamp}/Spyo_typing_summary.xlsx"
   conda:
@@ -603,5 +639,18 @@ rule typing_summary_to_xlsx_Spyo:
   threads: 16
   shell:
     """
-    python workflow/scripts/summary_to_xlsx.py -d '\t' {input} {output} 2>&1>{log}
+    python workflow/scripts/summary_to_xlsx.py {input.data} {input.versions} {output} -d '\t' 2>&1>{log}
     """
+
+include: "version_rules/abricate.smk"
+include: "version_rules/combine_mash_Nmen.smk"
+include: "version_rules/compare_SNPs.smk"
+include: "version_rules/ectyper.smk"
+include: "version_rules/emmtyper.smk"
+include: "version_rules/mash.smk"
+include: "version_rules/amrfinder.smk"
+include: "version_rules/meningotype.smk"
+include: "version_rules/snippy.smk"
+include: "version_rules/typing_general.smk"
+include: "version_rules/qc.smk"
+include: "version_rules/version_report_typing.smk"

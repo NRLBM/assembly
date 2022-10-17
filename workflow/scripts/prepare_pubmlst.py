@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import argparse
 
 # Three things to do
@@ -16,6 +19,7 @@ parser.add_argument('-o', '--output', help="Output folder", dest='output', requi
 parser.add_argument('-v', '--verbose', dest='verbose', action='count', help='Increase verbosity (nothing for WARNING, -v for INFO, -vv for DEBUG)')
 parser.add_argument('--force-copy', dest='force_copy', action='store_true', help='Force copying of genomes file (default: do not copy if file exists and size > 0)')
 parser.add_argument('--source-values', help="TSV file without header translating NRLBM source to PubMLST allowed values (default: metadata_pubmlst/source_values.tsv", dest='source_values', default='metadata_pubmlst/source_values.tsv')
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 

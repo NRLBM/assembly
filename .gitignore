@@ -10,4 +10,5 @@ slurm*
 bin/analyse_runs
 workflow/scripts/utils/__pycache__
 workflow/db/mash_databases/*
+workflow/db/emmtyper_db/*
 metadata_pubmlst

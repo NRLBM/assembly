@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import subprocess
 import argparse
 import json
@@ -8,6 +11,7 @@ parser = argparse.ArgumentParser(description='Encode a genome using base64 and p
 
 parser.add_argument('--genome', dest='genome', required=True, type=str, help='Genome assembly to type')
 parser.add_argument('--api-url', dest='api', required=True, type=str, help='API URL of the typing scheme')
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 

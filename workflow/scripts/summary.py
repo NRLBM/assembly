@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import argparse
 import zipfile
 
@@ -13,6 +16,7 @@ parser.add_argument('--kraken', dest="kraken", help="Kraken2 output directory", 
 parser.add_argument('--fastqc-pre', dest="fastqc_pre", help="FastQC pre-trimming output directory", type=str, default='fastqc_pre_out')
 parser.add_argument('--fastqc-post', dest="fastqc_post", help="FastQC post-trimming output directory", type=str, default='fastqc_post_out')
 parser.add_argument('--timestamp', dest="timestamp", help="Timestamp of analysis", type=str, required=True)
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 

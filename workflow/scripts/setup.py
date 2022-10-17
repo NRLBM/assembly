@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 # Import necessary libraries
 import subprocess
 import os
 import re
-
+import argparse
 
 def print_version(tool):
   '''
@@ -205,6 +208,9 @@ def ln_analyse_runs():
 
 
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
+  args = parser.parse_args()
   check_version()
   check_bashrc()
   check_email()

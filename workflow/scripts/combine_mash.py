@@ -1,5 +1,8 @@
 #!/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import pandas as pd
 import networkx as nx
 import subprocess
@@ -88,6 +91,7 @@ if __name__ == '__main__':
   parser.add_argument('--max-strains-cluster', help="Maximum number of strains per cluster", dest='max_nr_strains_cluster', default=100)
   parser.add_argument('-o', '--out', help="Output directory", dest='out', required=True)
   parser.add_argument('--timestamp', help="Timestamp", dest='timestamp', required=True)
+  parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
   args = parser.parse_args()
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+__author__ = "Boas van der Putten"
+__version__ = "0.0.1"
+
 import argparse
 
 parser = argparse.ArgumentParser(description='Summarise assembled isolates')
@@ -9,6 +12,7 @@ parser.add_argument('--timestamp', required=True, help='Timestamp to parse resul
 parser.add_argument("--thresholds", dest='thresholds', help='Quality control thresholds for sample selection', type=str, default='workflow/config/qc_thresholds.json')
 parser.add_argument("--exclude", dest='exclude', help='Specific samples to exclude regardless of QC', nargs='+', default = [])
 parser.add_argument('--output', required=True, dest='output', help='Destination of output', type=str)
+parser.add_argument('--version', action='version', version='%(prog)s {version}'.format(version=__version__))
 
 args = parser.parse_args()
 
