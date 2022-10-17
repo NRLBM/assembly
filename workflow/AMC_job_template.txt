@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Set bash to strict mode etc.
+set -euo pipefail
+
+#SBATCH -N 1
+
+# Set timestamp
+TIMESTAMP=REPLACE_TIME
+
+# Create backup directory
+mkdir -p "backup/${TIMESTAMP}"
+
+# Main snakemake command, writing stats to backup folder
+snakemake -s workflow/AMC_assembly.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_${TIMESTAMP}.json"
+
+# Snakemake command to create report in backup folder
+snakemake -s workflow/assembly.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_${TIMESTAMP}.html"
+
+# Perform QC
+python workflow/scripts/qc.py --species "Escherichia coli" --timestamp "$TIMESTAMP" --output "backup/${TIMESTAMP}/qc_report_ecoli.tsv"
+python workflow/scripts/qc.py --species "Neisseria meningitidis" --timestamp "$TIMESTAMP" --output "backup/${TIMESTAMP}/qc_report_nmen.tsv"
+python workflow/scripts/qc.py --species "Streptococcus pyogenes" --timestamp "$TIMESTAMP" --output "backup/${TIMESTAMP}/qc_report_spyo.tsv"
+
+# Typing snakemake command
+snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_typing_${TIMESTAMP}.json" --notemp
+
+# Snakemake command to create report in backup folder
+snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_typing_${TIMESTAMP}.html"
+
+NR_LINES_NMEN_QC_REPORT=$(wc -l "backup/${TIMESTAMP}/qc_report_nmen.tsv" | awk '{print $1}')
+
+if [[ "$NR_LINES_NMEN_QC_REPORT" -gt 1 ]]
+then
+  # Clustering snakemake command
+  snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_clustering_${TIMESTAMP}.json" --notemp
+
+  # Snakemake command to create report in backup folder
+  snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_clustering_${TIMESTAMP}.html"
+
+  # Run script to prepare PubMLST upload folder
+  mkdir -p "output/${TIMESTAMP}/pubmlst_upload"
+  python workflow/scripts/prepare_pubmlst.py -m metadata_pubmlst/metadata_pubmlst.csv --qc "backup/${TIMESTAMP}/qc_report_nmen.tsv" -o "output/${TIMESTAMP}/pubmlst_upload" --input "output/${TIMESTAMP}/genomes" 2>"output/${TIMESTAMP}/pubmlst_upload/logfile.txt"
+fi
+
+# Remove all files listed in list_files_to_remove.txt
+while read file
+do
+  echo "Removing $file"
+  rm "$file"
+done < "backup/${TIMESTAMP}/list_files_to_remove.txt"
+
+# Remove tmp_data folder with specific timestamp
+echo "Removing tmp_data/${TIMESTAMP}"
+rm -r "tmp_data/${TIMESTAMP}"
+
+# Mail to mail address stored in .email_user that job finished witout issues and that results are found in output folder
+echo "Het Lisa script ingediend op $TIMESTAMP is zonder foutmeldingen voltooid. De resultaten zijn te vinden in de \"output/${TIMESTAMP}\" map op Lisa." | mail -s "Lisa script ingediend op $TIMESTAMP is klaar" "$(cat .email_user),$(cat .email_bioinformatician)"
