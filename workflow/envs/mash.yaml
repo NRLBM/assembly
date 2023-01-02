@@ -3,3 +3,4 @@ channels:
 
 dependencies:
 - mash
+- gsl=2.7.0

@@ -1,6 +1,8 @@
 configfile: "workflow/config/config.yaml"
 
 rule emmtyper_version:
+  input:
+    dummy = "tmp_data/{timestamp}/emmtyper_db_updated.txt",
   output:
     temp("tmp_data/{timestamp}/versions/emmtyper.txt")
   params:

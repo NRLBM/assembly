@@ -5,3 +5,4 @@ channels:
 dependencies:
 - snippy=4.6.0
 - snpeff=5.0
+- gsl=2.7.0

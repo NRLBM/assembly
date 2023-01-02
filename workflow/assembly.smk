@@ -13,10 +13,12 @@ SAMPLE_NAMES_NUMBERS = ['_'.join([samplenumber, samplename]) for samplenumber, s
 # Define the desired output of the pipeline 
 rule all:
   input:
-    expand("output/{timestamp}/qc_reports", timestamp=config["timestamp"]),
+#    expand("output/{timestamp}/qc_reports", timestamp=config["timestamp"]),
     expand("backup/{timestamp}/{sample}.tar.gz", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
     expand("output/{timestamp}/summary.xlsx", timestamp=config["timestamp"]),
-    expand("backup/{timestamp}/list_files_to_remove.txt", timestamp=config["timestamp"])
+    expand("backup/{timestamp}/list_files_to_remove.txt", timestamp=config["timestamp"]),
+#    expand("tmp_data/{timestamp}/fastqc_pre_out/{sample}_{read}_fastqc.zip", sample=SAMPLE_NAMES, read = ['R1', 'R2'], timestamp=config["timestamp"]),
+#    expand("tmp_data/{timestamp}/kraken_out/{sample}.txt", sample=SAMPLE_NAMES, timestamp=config["timestamp"]),
 
 # Remove illumina sample numbers from read file names and copy to scratch
 rule move_to_scratch:

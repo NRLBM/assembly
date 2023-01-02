@@ -6,3 +6,4 @@ dependencies:
 - bcftools=1.14
 - vt=2015.11.10
 - python=3.9
+- gsl=2.7.0
