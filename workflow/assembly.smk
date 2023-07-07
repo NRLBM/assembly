@@ -10,6 +10,8 @@ configfile: "workflow/config/config.yaml"
 # Zip and join together all sample names and numbers. This will be used later on to find files to remove 
 SAMPLE_NAMES_NUMBERS = ['_'.join([samplenumber, samplename]) for samplenumber, samplename in zip(SAMPLE_NUMBERS, SAMPLE_NAMES)]
 
+SCRATCH_DIR = config["scratch_dir"]
+
 # Define the desired output of the pipeline 
 rule all:
   input:
@@ -23,21 +25,23 @@ rule all:
 # Remove illumina sample numbers from read file names and copy to scratch
 rule move_to_scratch:
   output:
-    fw = "/scratch/reads/{timestamp}/{samplename}_1.fastq.gz",
-    rv = "/scratch/reads/{timestamp}/{samplename}_2.fastq.gz",
+    fw = SCRATCH_DIR.joinpath("reads/{timestamp}/{samplename}_1.fastq.gz"),
+    rv = SCRATCH_DIR.joinpath("reads/{timestamp}/{samplename}_2.fastq.gz"),
   log:
     "slurm/snakemake_logs/{timestamp}/move_to_scratch/{samplename}.log"
   threads: 999
+  params:
+    scratch_dir = SCRATCH_DIR
   shell:
     """
-    mkdir -p /scratch/reads/{wildcards.timestamp}
+    mkdir -p {params.scratch_dir}/reads/{wildcards.timestamp}
     python workflow/scripts/move_to_scratch.py --input input --pattern microbesng --output {output.fw} {output.rv} -vv 2>&1>{log}
     """
 
 # Run FastQC before read trimming on R1 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R1:
   input:
-    "/scratch/reads/{timestamp}/{sample}_1.fastq.gz"
+    SCRATCH_DIR.joinpath("reads/{timestamp}/{sample}_1.fastq.gz")
   output:
     html = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R1_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -51,7 +55,7 @@ rule fastqc_pre_R1:
 # Run FastQC before read trimming on R2 reads. This uses a Snakemake wrapper
 rule fastqc_pre_R2:
   input:
-    "/scratch/reads/{timestamp}/{sample}_2.fastq.gz"
+    SCRATCH_DIR.joinpath("reads/{timestamp}/{sample}_2.fastq.gz")
   output:
     html = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2.html"),
     zip = temp("tmp_data/{timestamp}/fastqc_pre_out/{sample}_R2_fastqc.zip") # the suffix _fastqc.zip is necessary for multiqc to find the file
@@ -71,8 +75,8 @@ rule fastqc_pre_R2:
 # MINLEN:36 Remove reads shorter than 36 bp
 rule trimmomatic_pe:
   input:
-    r1 = "/scratch/reads/{timestamp}/{sample}_1.fastq.gz",
-    r2 = "/scratch/reads/{timestamp}/{sample}_2.fastq.gz"
+    r1 = SCRATCH_DIR.joinpath("reads/{timestamp}/{sample}_1.fastq.gz"),
+    r2 = SCRATCH_DIR.joinpath("reads/{timestamp}/{sample}_2.fastq.gz")
   output:
     r1 = temp("tmp_data/{timestamp}/trimmed/{sample}_1_corrected.fastq.gz"),
     r2 = temp("tmp_data/{timestamp}/trimmed/{sample}_2_corrected.fastq.gz"),
