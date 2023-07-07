@@ -45,18 +45,18 @@ snakemake -s workflow/typing.smk --config timestamp="$TIMESTAMP" -j 16 --use-con
 
 NR_LINES_NMEN_QC_REPORT=$(wc -l "backup/${TIMESTAMP}/qc_report_nmen.tsv" | awk '{print $1}')
 
-if [[ "$NR_LINES_NMEN_QC_REPORT" -gt 1 ]]
-then
-  # Clustering snakemake command
-  snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_clustering_${TIMESTAMP}.json" --notemp
+# if [[ "$NR_LINES_NMEN_QC_REPORT" -gt 1 ]]
+# then
+#   # Clustering snakemake command
+#   snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --latency-wait 60 --printshellcmds --stats "backup/${TIMESTAMP}/stats_clustering_${TIMESTAMP}.json" --notemp
 
-  # Snakemake command to create report in backup folder
-  snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_clustering_${TIMESTAMP}.html"
+#   # Snakemake command to create report in backup folder
+#   snakemake -s workflow/clustering.smk --config timestamp="$TIMESTAMP" -j 16 --use-conda --report "backup/${TIMESTAMP}/report_clustering_${TIMESTAMP}.html"
 
-  # Run script to prepare PubMLST upload folder
-  mkdir -p "output/${TIMESTAMP}/pubmlst_upload"
-  python workflow/scripts/prepare_pubmlst.py -m metadata_pubmlst/metadata_pubmlst.csv --qc "backup/${TIMESTAMP}/qc_report_nmen.tsv" -o "output/${TIMESTAMP}/pubmlst_upload" --input "output/${TIMESTAMP}/genomes" 2>"output/${TIMESTAMP}/pubmlst_upload/logfile.txt"
-fi
+#   # Run script to prepare PubMLST upload folder
+#   mkdir -p "output/${TIMESTAMP}/pubmlst_upload"
+#   python workflow/scripts/prepare_pubmlst.py -m metadata_pubmlst/metadata_pubmlst.csv --qc "backup/${TIMESTAMP}/qc_report_nmen.tsv" -o "output/${TIMESTAMP}/pubmlst_upload" --input "output/${TIMESTAMP}/genomes" 2>"output/${TIMESTAMP}/pubmlst_upload/logfile.txt"
+# fi
 
 # Remove all files listed in list_files_to_remove.txt
 while read file
