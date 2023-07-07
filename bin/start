@@ -43,4 +43,10 @@ sed -i "s/REPLACE_TIME/$START_TIME/" slurm/jobs/"job_${START_TIME}.txt"
 # Mail at end and error of analysis to bioinformatician
 # Specified time, calculated by check.py
 # Send error and output to slurm log
-sbatch --mail-type END,ERROR --mail-user $(cat .email_bioinformatician) --time "$NR_MINUTES" --output "slurm/slurm_logs/${START_TIME}/job_%j_%u.out" --error "slurm/slurm_logs/${START_TIME}/job_%j_%u.err" slurm/jobs/"job_${START_TIME}.txt"
+sbatch \
+  --mail-type END,ERROR \
+  --mail-user $(cat .email_bioinformatician) \
+  --time "$NR_MINUTES" \
+  --output "slurm/slurm_logs/${START_TIME}/job_%j_%u.out" \
+  --error "slurm/slurm_logs/${START_TIME}/job_%j_%u.err" \
+  slurm/jobs/"job_${START_TIME}.txt"
