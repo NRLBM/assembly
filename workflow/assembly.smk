@@ -1,3 +1,5 @@
+from pathlib import Path
+
 # This defines the file containing configurations
 # These values can be accessed through config[entry]
 # See https://yaml.org/ for explanation of the YAML format
@@ -10,7 +12,7 @@ configfile: "workflow/config/config.yaml"
 # Zip and join together all sample names and numbers. This will be used later on to find files to remove 
 SAMPLE_NAMES_NUMBERS = ['_'.join([samplenumber, samplename]) for samplenumber, samplename in zip(SAMPLE_NUMBERS, SAMPLE_NAMES)]
 
-SCRATCH_DIR = config["scratch_dir"]
+SCRATCH_DIR = Path(config["scratch_dir"])
 
 # Define the desired output of the pipeline 
 rule all:
